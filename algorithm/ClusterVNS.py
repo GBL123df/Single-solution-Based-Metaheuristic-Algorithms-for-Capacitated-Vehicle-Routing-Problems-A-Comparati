@@ -69,13 +69,24 @@ def first_route(points,labels, C):
 
 
 #fase dell'algoritmo di "esplorazione" casuale del vicinato
-def shake(sol,routes,points,demands,Q):
+def shake(sol,routes,points,demands,Q,mode):
     # neigh_struct = np.random.randint(0,N + 1) #in base a quanti tipi di strutture di vicinato inserisco decido N che sarà costante
-    neigh_struct = np.random.choice(np.array([0,1,2,3,4,5]))
-    # neigh_struct = np.random.choice(np.array([1,2,3,4,5]))
-    # neigh_struct = 0
-    routes,difference = hrst.neighbour(neigh_struct,routes, points, demands, Q, mode='feasible')
-    sol = sol + difference
+    if mode == 'one':
+        neigh_struct = np.random.choice(np.array([0,1,2,3,4,5]))
+        # neigh_struct = np.random.choice(np.array([1,2,3,4,5]))
+        # neigh_struct = 0
+        routes,difference = hrst.neighbour(neigh_struct,routes, points, demands, Q, mode='feasible')
+        sol = sol + difference
+    elif mode == 'cocktail':
+        N = np.random.randint(low = 2,high = 5)
+        i = 0
+        while i < N:
+            neigh_struct = np.random.choice(np.array([0, 1, 2, 3, 4, 5]))
+            # neigh_struct = np.random.choice(np.array([1,2,3,4,5]))
+            # neigh_struct = 0
+            routes, difference = hrst.neighbour(neigh_struct, routes, points, demands, Q, mode='feasible')
+            sol = sol + difference
+            i += 1
     return routes,sol
 
  
@@ -151,42 +162,66 @@ def equalSol(x1,x2):
         else: return False
 
 
-def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,p):
-    
+def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,prob):
+    debug = True
     routes,sol = first_route(points,labels,C)
     taboo = []
+    taboo_counter = 0
     t0 = pfc()
     t = t0
+    mode = 'one'
     while t - t0 <= T:
         t_1 = pfc()
+        if taboo_counter > 3:
+            p = max(1,p*1.5)
+        else:
+            p = prob
         destFactor = np.random.choice(np.array([0,1]),p = np.array([p,1 - p]))
         sol0 = sol.copy()
         x0 = routes.copy()
         if destFactor == 0:
             # N = np.random.randint(1,3)
             x0,sol0 = dstrp.destroyAndRepair(routes,points,demands,Q)
-        t_2 = pfc()
-        print("\nFase 1 destRec = ", t_2-t_1,"\n" )
-        x1,sol1 = shake(sol0,x0,points,demands,Q)
-        t_3 = pfc()
-        print("\nFase 2 shake = ", t_3-t_2,"\n" )
-        # x1_f,sol1_f = make_it_feasible(sol1,x1,points,demands,Q)
+
+        if debug:
+            t_2 = pfc()
+            print("\nFase 1 destRec = ", t_2-t_1,"\n" )
+            print("\n",inst.constraints(x0,demands,Q),"\n")
+
+        if taboo_counter > 3:
+            mode = 'cocktail'
+        x1,sol1 = shake(sol0,x0,points,demands,Q,mode)
+        mode = 'one'
+
+        if debug:
+
+            t_3 = pfc()
+            print("\nFase 2 shake = ", t_3-t_2,"\n" )
+            print("\n",inst.constraints(x1,demands,Q),"\n")
+
         x2,sol2 = first_improvement(sol1,x1,points,demands,Q,hmax)
-        t_4 = pfc()
-        print("\n Fase 3 improvement = ", t_4-t_3,"\n" )
+        if debug:
+            t_4 = pfc()
+            print("\n Fase 3 improvement = ", t_4-t_3,"\n" )
+            print("\n",inst.constraints(x2,demands,Q),"\n")
 
         for old in taboo:
             if equalSol(x2,old):
                 t = pfc()
+                taboo_counter += 1
                 continue
         if sol2 - sol < 0 and inst.constraints(x2,demands,Q) == True:
             routes = x2
             sol = sol2
             taboo.append((routes,sol))
+            taboo_counter = 0
             if len(taboo) > len_Taboo:
                 taboo.pop(0)
-        t_5 = pfc()
-        print("\nFase 4 taboo controls = ", t_5-t_4,"\n" )
+        if debug:
+            t_5 = pfc()
+            print("\nFase 4 taboo controls = ", t_5-t_4,"\n" )
+            print("\n",inst.constraints(routes,demands,Q),"\n")
+
 
         t = pfc()
     return routes,sol
@@ -195,5 +230,5 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,p):
 
 def CluVNS(points,demands, Q,T,hmax):
     labels,cum_qt,C = clust.DBCVRI(points,demands,Q)
-    routes,sol = VNS(points, labels, demands, Q,T,C,hmax,len_Taboo = 5,p = 1)
+    routes,sol = VNS(points, labels, demands, Q,T,C,hmax,len_Taboo = 5,prob = 0.1)
     return routes,sol

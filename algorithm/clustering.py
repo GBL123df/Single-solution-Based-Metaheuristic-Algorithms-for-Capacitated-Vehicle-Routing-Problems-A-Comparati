@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import time
 from time import perf_counter as pfc
 
-# def euclidean_distance(point1, point2):
-#     return math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
+
 
 def neighboroud(points,point,k,eps): #funzione che calcola i k indici dei points più vicini a pointg e 
                                       # verifica se essi entrano nel cerchio di centro point e raggio eps

@@ -82,6 +82,15 @@ def create_instance_from_file(file_path):
 
 
 def constraints(routes,demands,Q):
+    filtered_routes = []
+    for r in routes:
+        if r[0] == 0 and np.all(r[1:-1] != r[0]) and r[-1] == 0 and len(r) >= 3:
+            # Append only the valid routes to the new list
+            filtered_routes.append(r)
+
+    # Update the routes list with the filtered routes
+    routes = filtered_routes
+
     feasible = True
     for route in routes:
         demand_route = demands[route]
@@ -105,14 +114,7 @@ def constraints(routes,demands,Q):
         feasible = False
         return feasible,routes
 
-    filtered_routes = []
-    for r in routes:
-        if np.all(r[0] == 0) and np.all(r[1:-1] != r[0]) and np.all(r[-1] == 0) and len(r) >= 3:
-            # Append only the valid routes to the new list
-            filtered_routes.append(r)
 
-    # Update the routes list with the filtered routes
-    routes = filtered_routes
 
     return feasible,routes
 

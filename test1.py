@@ -130,7 +130,7 @@ class TestMyFunction(unittest.TestCase):
         self.assertGreaterEqual(tol, sol - best_val_an32k5)
 
 
-    @unittest.skip("a little slow")
+    # @unittest.skip("a little slow")
     def test_algorithm3(self):
 
         tol = 50
@@ -160,7 +160,7 @@ class TestMyFunction(unittest.TestCase):
         points = np.array(Flanders2.maps)
         demands = np.array(Flanders2.demands)
         Q = Flanders2.v_capacities
-        T = 3000
+        T = 300
 
         t1 = pfc()
         best_routes, sol = cvns.CluVNS(points, demands, Q, T, hmax=5)

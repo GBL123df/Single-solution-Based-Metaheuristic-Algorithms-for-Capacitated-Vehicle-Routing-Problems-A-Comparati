@@ -18,6 +18,8 @@ random = False
 
 
 def arc_exchange(routes, points, demands, Q,mode):
+    start_feasible,routes = inst.constraints(routes,demands,Q)
+
     l_r = len(routes)
     arc_1 = np.zeros(2,dtype=int)
     arc_2 = np.zeros(2,dtype=int)
@@ -119,7 +121,7 @@ def arc_exchange(routes, points, demands, Q,mode):
 def swap_inter_route(routes, points, demands, Q,mode):
 
     #___RICORDARMI DI EFFICIENTARLA___!!!
-    
+    start_feasible,routes = inst.constraints(routes,demands,Q)
     l_r = len(routes)
 
     route_ex = np.random.randint(0, l_r , size = 2)
@@ -203,7 +205,8 @@ def swap_inter_route(routes, points, demands, Q,mode):
 def move_node(routes, points, demands, Q, mode):
 
     #___RICORDARMI DI EFFICIENTARLA___!!!
-    
+    start_feasible,routes = inst.constraints(routes,demands,Q)
+
     l_r = len(routes)
 
     route_ex = np.random.randint(0, l_r, size = 2)
@@ -296,6 +299,7 @@ def move_node(routes, points, demands, Q, mode):
 
 def swap_intra_route(routes, points, demands, Q, mode):
     # ___RICORDARMI DI EFFICIENTARLA___!!!
+    start_feasible,routes = inst.constraints(routes,demands,Q)
 
     l_r = len(routes)
 
@@ -368,6 +372,8 @@ def swap_intra_route(routes, points, demands, Q, mode):
             return candidate_routes, difference
 
 def two_opt_exchange_outer(routes, points, demands, Q, mode):
+    start_feasible,routes = inst.constraints(routes,demands,Q)
+
     l_r = len(routes)
     arc_1 = np.zeros(2, dtype=int)
     arc_2 = np.zeros(2, dtype=int)
@@ -469,6 +475,8 @@ def two_opt_exchange_outer(routes, points, demands, Q, mode):
         return candidate_routes, difference
 
 def two_opt_exchange_inner(routes, points, demands, Q, mode):
+    start_feasible,routes = inst.constraints(routes,demands,Q)
+
     l_r = len(routes)
     arc_1 = np.zeros(2, dtype=int)
     arc_2 = np.zeros(2, dtype=int)
