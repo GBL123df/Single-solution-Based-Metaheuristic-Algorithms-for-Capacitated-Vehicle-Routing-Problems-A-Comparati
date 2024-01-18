@@ -1,0 +1,6 @@
+numpy
+time
+ortools
+os
+re
+matplotlib
