@@ -515,11 +515,7 @@ class TestMyFunction(unittest.TestCase):
         file7 = os.path.join(self.path, file7)
 
         instance = inst.create_instance_from_file(file5)
-        best_val_instance = 784
-        # xn101k25 = inst.create_instance_from_file(file2)
-        # Flanders2 = inst.create_instance_from_file(file3)
-        # Antwerp1 = inst.create_instance_from_file(file4)
-        # Ghent1 = inst.create_instance_from_file(file5)
+        # best_val_instance = 784
 
         points = np.array(instance.maps)
         demands = np.array(instance.demands)
@@ -529,12 +525,19 @@ class TestMyFunction(unittest.TestCase):
         t1 = pfc()
         best_routes, sol = cvns.CluVNS(points, demands, Q, T, hmax=5)
         t2 = pfc()
-        feasible = inst.constraints(best_routes,demands,Q)
+        feasible,_ = inst.constraints(best_routes,demands,Q)
+        # X = inst.standard_form_solHigh(routes=best_routes, points=points)
+        # route_cfr = inst.route_form_solHigh(X, points)
+        # feas_std = inst.constraint_standardHigh(X, demands, Q)
         if np.size(instance.maps) <= 1000:
             X = inst.standard_form_sol(routes=best_routes, points=points)
             route_cfr = inst.route_form_sol(X, points)
             feas_std = inst.constraint_standard(X, demands, Q)
-
+        else:
+            X = inst.standard_form_solHigh(routes=best_routes, points=points)
+            route_cfr = inst.route_form_solHigh(X, points)
+            feas_std = inst.constraint_standardHigh(X, demands, Q)
+        self.assertEqual(feasible,feas_std)
 
 if __name__ == '__main__':
     unittest.main()

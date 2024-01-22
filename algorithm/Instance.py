@@ -1,10 +1,7 @@
 import numpy as np
-import ortools as ort
-import os
-import time
-from time import perf_counter as pfc
 import re
-
+from scipy.sparse import csc_matrix
+from algorithm.ClusterVNS import CluVNS
 
 class Instance:
     
@@ -29,7 +26,62 @@ class Instance:
         distance_matrix = pairwise_distances.reshape(num_points, num_points)
         return distance_matrix
 
-    
+    def compute_sol(self,T,hmax):
+        solution = CluVNS(self.maps,self.demands,self.v_capacities,T,hmax)
+        return Solution(solution)
+
+class Solution(Instance):
+    def __init__(self, routes = None,value = None, solution = None,feasible = False):
+        self.routes = routes
+        self.solution = solution
+        self.value = value
+        self.feasible = feasible
+
+    def constraints(self):
+        demands = self.demands
+        Q = self.v_capacities
+        routes = self.routes
+        self.feasible, _ = constraints(routes,demands,Q)
+
+
+    def standard_form_sol(self):
+        routes = self.routes
+        points = self.maps
+        self.X = standard_form_solHigh(routes,points)
+
+    def route_form_sol(self):
+        X = self.solution
+        points = self.maps
+        self.routes = route_form_sol(X, points)
+
+    def constraint_standard(self):
+        X = self.solution
+        demands = self.demands
+        Q = self.v_capacities
+        self.feasible,_ = constraint_standard(X, demands, Q)
+
+    def standard_form_solHigh(self):
+        routes = self.routes
+        points = self.maps
+        self.solution = standard_form_solHigh(routes, points)
+
+
+    def route_form_solHigh(self):
+        X = self.solution
+        points = self.maps
+        self.routes = route_form_solHigh(X, points)
+
+
+    def constraint_standardHigh(self):
+        X = self.solution
+        demands = self.demands
+        Q = self.v_capacities
+        self.feasible = constraint_standardHigh(X, demands, Q)
+
+
+
+
+
 
 
 #This function helps to build an Instance object from the text files downloaded from http://vrp.atd-lab.inf.puc-rio.br/index.php/en/
@@ -77,7 +129,6 @@ def create_instance_from_file(file_path):
     demands = np.array(demands)
     # Create the Instance object
     instance = Instance(maps, demands, v_capacities)
-
     return instance
 
 
@@ -113,9 +164,6 @@ def constraints(routes,demands,Q):
     if np.any(np.sort(routes_hpstack) != np.unique(routes_hpstack)):
         feasible = False
         return feasible,routes
-
-
-
     return feasible,routes
 
 def standard_form_sol(routes,points):
@@ -144,9 +192,8 @@ def route_form_sol(X,points):
     return routes
 def constraint_standard(X,demands,Q):
     feasible = True
-    n_points = np.size(X,axis=1)
+    n_points = np.size(X,axis=0)
     for r in range(n_points-1):
-
         if np.sum(X[r,0,:]) != 1:
             if np.sum(X[r, 0, :]) != 0:
                 feasible = False
@@ -159,7 +206,10 @@ def constraint_standard(X,demands,Q):
         if np.sum(X[:,i,:]) != 1:
             feasible = False
             return feasible
-
+    # for i in range(n_points):
+    #     if np.sum(X[:,:,1]) != 1:
+    #         feasible = False
+    #         return feasible
     for r in range(n_points-1):
         for i in range(n_points):
             if np.sum(X[r,i,:]) - np.sum(X[r,:,i]) != 0:
@@ -174,18 +224,68 @@ def constraint_standard(X,demands,Q):
             return feasible
     return feasible
 
-# percorso= "C://Users//giuse//OneDrive//Desktop//TESI MAGISTRALE//ProveBenchmarking//ClusterVNS//Instanze//"
-# file = percorso + "A-n32-k5.txt"
-# file2 = percorso + "X-n101-k25.txt"
-# file3 = percorso + "Flanders2.txt"
-# an32k5=create_instance_from_file(file)
-# xn101k25 = create_instance_from_file(file2)
-# Flanders2 = create_instance_from_file(file3)
-# print(xn101k25.v_capacities)
+def standard_form_solHigh(routes,points):
+    n_points = np.size(points,axis=0)
+    X = []
+    for n,r in enumerate(routes):
+        Xr = csc_matrix((n_points, n_points))
+        for i,r_i in enumerate(r):
+            if i>0:
+                Xr[r[i-1],r_i] = 1
+        X.append(Xr)
+    return X
 
-# t1 = pfc()
-# Flanders2.distance_matrix()
-# t2 = pfc()
-# print(t2-t1)
+def route_form_solHigh(X,points):
+    routes=[]
+    n_points = np.size(points,axis=0)
+    for r in X:
+        if np.sum(r) > 0:
+            route = []
+            route.append(0)
+            i = 0
+            j = int(r[i, :].nonzero()[1])
+            route.append(j)
+            while j != 0:
+                i = j
+                j = int(r[i, :].nonzero()[1])
+                route.append(j)
+            routes.append(np.array(route))
+    return routes
+def constraint_standardHigh(X,demands,Q):
+    feasible = True
+    n_points = np.size(X,axis=0)
+    for r in X:
+        if r[0,:].sum() != 1:
+            if r[0, :].sum() != 0:
+                feasible = False
+                return feasible
+        if r[:,0].sum() != 1:
+            if r[0,:].sum() != 0:
+                feasible = False
+            return feasible
+    for i in range(n_points):
+        if i>0:
+            somma = 0
+            for r in X:
+                somma += r[i,:].sum()
+            if somma != 1:
+                feasible = False
+                return feasible
+
+    for r in X:
+        for i in range(n_points):
+            if i > 0:
+                if r[i,:].sum() - r[:,i].sum() != 0:
+                    feasible = False
+                    return feasible
+    for r in X:
+        somma = 0
+        for i in range(n_points):
+            somma += demands[i]*r[i,:].sum()
+        if somma > Q:
+            feasible = False
+            return feasible
+    return feasible
+
 
 
