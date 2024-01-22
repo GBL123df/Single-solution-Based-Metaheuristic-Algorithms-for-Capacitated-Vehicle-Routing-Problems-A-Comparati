@@ -118,6 +118,61 @@ def constraints(routes,demands,Q):
 
     return feasible,routes
 
+def standard_form_sol(routes,points):
+    X = np.zeros([np.size(points,axis=0)-1,np.size(points,axis=0),np.size(points,axis=0)])
+    for n,r in enumerate(routes):
+        for i,r_i in enumerate(r):
+            if i>0:
+                X[n,r[i-1],r_i] = 1
+    return X
+
+def route_form_sol(X,points):
+    routes=[]
+    n_points = np.size(points,axis=0)
+    for r in range(n_points - 1):
+        if np.sum(X[r]) > 0:
+            route = []
+            route.append(0)
+            i = 0
+            j = int(np.where(X[r,i,:] == 1)[0])
+            route.append(j)
+            while j != 0:
+                i = j
+                j = int(np.where(X[r, i, :] == 1)[0])
+                route.append(j)
+            routes.append(np.array(route))
+    return routes
+def constraint_standard(X,demands,Q):
+    feasible = True
+    n_points = np.size(X,axis=1)
+    for r in range(n_points-1):
+
+        if np.sum(X[r,0,:]) != 1:
+            if np.sum(X[r, 0, :]) != 0:
+                feasible = False
+                return feasible
+        if np.sum(X[r,:,0]) != 1:
+            if np.sum(X[r, 0, :]) != 0:
+                feasible = False
+            return feasible
+    for i in range(n_points):
+        if np.sum(X[:,i,:]) != 1:
+            feasible = False
+            return feasible
+
+    for r in range(n_points-1):
+        for i in range(n_points):
+            if np.sum(X[r,i,:]) - np.sum(X[r,:,i]) != 0:
+                feasible = False
+                return feasible
+    for r in range(n_points-1):
+        somma = 0
+        for i in range(n_points):
+            somma += demands[i]*np.sum(X[r,i,:])
+        if somma > Q:
+            feasible = False
+            return feasible
+    return feasible
 
 # percorso= "C://Users//giuse//OneDrive//Desktop//TESI MAGISTRALE//ProveBenchmarking//ClusterVNS//Instanze//"
 # file = percorso + "A-n32-k5.txt"

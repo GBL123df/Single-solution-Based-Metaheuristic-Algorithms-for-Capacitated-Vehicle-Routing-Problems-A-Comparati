@@ -20,11 +20,32 @@ def coloration(n):
     #print(color)
     return color
 
-# def ha_elemento_uguale(lista1, lista2):
-#     for elemento in lista1:
-#         if elemento in lista2:
-#             return True
-#     return False
+# def print_solution(sol,routes, demands):
+#     """Prints solution on console."""
+#     print(f"Objective: {sol}")
+#     total_distance = 0
+#     total_load = 0
+#     for vehicle_id,r in enumerate(routes):
+#         # index = routing.Start(vehicle_id)
+#         plan_output = f"Route for vehicle {vehicle_id}:\n"
+#         route_distance = 0
+#         route_load = 0
+#         for j,i in enumerate(routes):
+#             # node_index = manager.IndexToNode(index)
+#             route_load += demands[i]
+#             plan_output += f" {i} Load({route_load}) -> "
+#             # index = solution.Value(routing.NextVar(index))
+#             if j>0:
+#                 route_distance += hrst.dist(r[j-1,j])
+#         plan_output += f" {i} Load({route_load})\n"
+#         plan_output += f"Distance of the route: {route_distance}m\n"
+#         plan_output += f"Load of the route: {route_load}\n"
+#         print(plan_output)
+#         total_distance += route_distance
+#         total_load += route_load
+#     print(f"Total distance of all routes: {total_distance}m")
+#     print(f"Total load of all routes: {total_load}")
+#     return total_distance
 
 class TestMyFunction(unittest.TestCase):
     def setUp(self):
@@ -112,11 +133,18 @@ class TestMyFunction(unittest.TestCase):
         points = np.array(an32k5.maps)
         demands = np.array(an32k5.demands)
         Q = an32k5.v_capacities
-        T = 10
+        T = 1.0101987000000001
 
         t1 = pfc()
         best_routes,sol = cvns.CluVNS(points,demands, Q,T,hmax=5)
         t2 = pfc()
+
+        X = inst.standard_form_sol(routes= best_routes, points=points)
+        route_cfr = inst.route_form_sol(X,points)
+        feas_std = inst.constraint_standard(X,demands,Q)
+
+
+
         print("Il valore di sol:", sol)
         self.logger = logging.getLogger(__name__)
         self.logger.info("Il valore di sol: %s", sol)
@@ -207,7 +235,7 @@ class TestMyFunction(unittest.TestCase):
         points = np.array(xn101k25.maps)
         demands = np.array(xn101k25.demands)
         Q = xn101k25.v_capacities
-        T = 3000
+        T = 1
 
         t1 = pfc()
         best_routes, sol = cvns.CluVNS(points, demands, Q, T,hmax=5)
@@ -465,6 +493,47 @@ class TestMyFunction(unittest.TestCase):
 
         np.any(new_routes,routes)
 
+
+    def test_algorithm(self):
+        tol = 50
+
+        percorso = "./Instanze/"
+        file = percorso + "A-n32-k5.txt"
+        file2 = percorso + "X-n101-k25.txt"
+        file3 = percorso + "Flanders2.txt"
+        file4 = percorso + "Antwerp1.txt"
+        file5 = percorso + "Ghent1.txt"
+        file6 = percorso + "P-n101-k4.txt"
+        file7 = percorso + "Golden_20.txt"
+
+        file = os.path.join(self.path, file)
+        file2 = os.path.join(self.path, file2)
+        file3 = os.path.join(self.path, file3)
+        file4 = os.path.join(self.path, file4)
+        file5 = os.path.join(self.path, file5)
+        file6 = os.path.join(self.path, file6)
+        file7 = os.path.join(self.path, file7)
+
+        instance = inst.create_instance_from_file(file5)
+        best_val_instance = 784
+        # xn101k25 = inst.create_instance_from_file(file2)
+        # Flanders2 = inst.create_instance_from_file(file3)
+        # Antwerp1 = inst.create_instance_from_file(file4)
+        # Ghent1 = inst.create_instance_from_file(file5)
+
+        points = np.array(instance.maps)
+        demands = np.array(instance.demands)
+        Q = instance.v_capacities
+        T = 1.0101987000000001
+
+        t1 = pfc()
+        best_routes, sol = cvns.CluVNS(points, demands, Q, T, hmax=5)
+        t2 = pfc()
+        feasible = inst.constraints(best_routes,demands,Q)
+        if np.size(instance.maps) <= 1000:
+            X = inst.standard_form_sol(routes=best_routes, points=points)
+            route_cfr = inst.route_form_sol(X, points)
+            feas_std = inst.constraint_standard(X, demands, Q)
 
 
 if __name__ == '__main__':

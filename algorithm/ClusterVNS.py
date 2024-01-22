@@ -163,7 +163,7 @@ def equalSol(x1,x2):
 
 
 def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,prob):
-    debug = True
+    debug = False
     routes,sol = first_route(points,labels,C)
     taboo = []
     taboo_counter = 0
@@ -232,3 +232,4 @@ def CluVNS(points,demands, Q,T,hmax):
     labels,cum_qt,C = clust.DBCVRI(points,demands,Q)
     routes,sol = VNS(points, labels, demands, Q,T,C,hmax,len_Taboo = 5,prob = 0.1)
     return routes,sol
+
