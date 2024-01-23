@@ -2,6 +2,7 @@ import numpy as np
 import re
 from scipy.sparse import csc_matrix
 from algorithm.ClusterVNS import CluVNS
+import matplotlib.pyplot as plt
 
 class Instance:
     
@@ -28,10 +29,14 @@ class Instance:
 
     def compute_sol(self,T,hmax):
         solution = CluVNS(self.maps,self.demands,self.v_capacities,T,hmax)
-        return Solution(solution)
+        return Solution(routes=solution[0],value=solution[1],maps = self.maps, demands = self.demands, v_capacities = self.v_capacities)
+
+    def plot_map(self):
+        plot_routes(points=self.maps)
 
 class Solution(Instance):
-    def __init__(self, routes = None,value = None, solution = None,feasible = False):
+    def __init__(self, routes = None,value = None, solution = None,feasible = False, maps = [], demands = [], v_capacities = 0):
+        super().__init__(maps, demands, v_capacities)
         self.routes = routes
         self.solution = solution
         self.value = value
@@ -42,43 +47,48 @@ class Solution(Instance):
         Q = self.v_capacities
         routes = self.routes
         self.feasible, _ = constraints(routes,demands,Q)
-
+        return self.feasible
 
     def standard_form_sol(self):
         routes = self.routes
         points = self.maps
-        self.X = standard_form_solHigh(routes,points)
+        self.solution = standard_form_solHigh(routes,points)
+        return self.solution
 
     def route_form_sol(self):
         X = self.solution
         points = self.maps
         self.routes = route_form_sol(X, points)
+        return self.routes
 
     def constraint_standard(self):
         X = self.solution
         demands = self.demands
         Q = self.v_capacities
         self.feasible,_ = constraint_standard(X, demands, Q)
+        return self.feasible
 
     def standard_form_solHigh(self):
         routes = self.routes
         points = self.maps
         self.solution = standard_form_solHigh(routes, points)
-
+        return self.solution
 
     def route_form_solHigh(self):
         X = self.solution
         points = self.maps
         self.routes = route_form_solHigh(X, points)
-
+        return self.routes
 
     def constraint_standardHigh(self):
         X = self.solution
         demands = self.demands
         Q = self.v_capacities
         self.feasible = constraint_standardHigh(X, demands, Q)
+        return self.feasible
 
-
+    def plot_routes(self,arrow = False):
+        plot_routes(points=self.maps,sol=True,routes=self.routes,arrows=arrow)
 
 
 
@@ -286,6 +296,46 @@ def constraint_standardHigh(X,demands,Q):
             feasible = False
             return feasible
     return feasible
+
+def plot_routes( points,sol = False,routes = [],arrows = False):
+    plt.figure(figsize=(8, 8))
+
+    # Disegna i punti di destinazione come cerchi vuoti
+    plt.scatter(points[1:, 0], points[1:, 1], c='black', marker='o', s=50, label='Destinazioni', facecolors='none', edgecolors='black')
+    if sol:
+        for route in routes:
+            # Estrai le coordinate dei punti nella route
+            route_points = points[route]
+
+            # Disegna la linea della route
+            plt.plot(route_points[:, 0], route_points[:, 1], linestyle='-', linewidth=2)
+
+            if arrows:
+            # Aggiungi frecce direzionali
+                for i in range(len(route) - 1):
+                    dx = route_points[i + 1, 0] - route_points[i, 0]
+                    dy = route_points[i + 1, 1] - route_points[i, 1]
+
+                    # Calcola la direzione normalizzata
+                    direction = np.array([dx, dy]) / np.linalg.norm([dx, dy])
+
+                    # Aggiungi la freccia
+                    plt.arrow(route_points[i, 0], route_points[i, 1], direction[0], direction[1], head_width=2, head_length=3, fc='black', ec='red')
+
+    # Disegna il deposito come stella nera
+    depot = points[0]
+    plt.scatter(depot[0], depot[1], c='black', marker='*', s=300, label='Deposito')
+
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    if sol:
+        plt.title('Routes')
+    else:
+        plt.title('Map')
+    # plt.legend()
+    plt.grid(True)
+    plt.show()
+
 
 
 

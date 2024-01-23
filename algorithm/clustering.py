@@ -102,7 +102,8 @@ def DBCVRI(points,demands,Q): #Density based clustering for vehicle routing init
     k = np.floor(Q / np.mean(demands))
     C = 0
     depot = points[0,:]
-    points = points[1:]
+    points = points[1:].copy()
+    demands = demands[1:]
     n = np.shape(points)[0]
     label = -np.ones(n)
     visited = np.zeros(n,dtype=bool)
@@ -127,9 +128,8 @@ def DBCVRI(points,demands,Q): #Density based clustering for vehicle routing init
                 C += 1
             
     label,cum_qt,C = noise_clusters(label,n,C,points,demands,Q,cum_qt)
-
     cum_qt = np.array(cum_qt)
-
+    # label = np.insert(label, 0, -1)
     return label, cum_qt, C
 
 

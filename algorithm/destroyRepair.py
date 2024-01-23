@@ -17,7 +17,7 @@ from algorithm import heuristics as hrst
 
 ######DESTROY#########
 def random_client_removal(routes, points, demands, Q):
-    points = points[1:]
+    # points = points[1:]
     routes_trunk = [route[1:-1] for route in routes]
     routes_hpstack = np.hstack(routes_trunk)
     indexes = np.unique(routes_hpstack)
@@ -45,7 +45,7 @@ def random_client_removal(routes, points, demands, Q):
 
 
 def zone_removal(routes, points, demands, Q):
-    points = points[1:]
+#     points = points[1:]
     routes_trunk = [route[1:-1] for route in routes]
     routes_hpstack = np.hstack(routes_trunk)
     indexes = np.unique(routes_hpstack)
@@ -86,7 +86,7 @@ def zone_removal(routes, points, demands, Q):
 
 
 def prox_based_removal(routes, points, demands, Q):
-    points = points[1:]
+#     points = points[1:]
     routes_trunk = [route[1:-1] for route in routes]
     routes_hpstack = np.hstack(routes_trunk)
     indexes = np.unique(routes_hpstack)
@@ -162,7 +162,7 @@ def destroy(routes, points, demands, Q): #, N):
 
 def greedy_insertion(removed, routes, points, demands, Q):
     feasible = False
-    points = points[1:]
+#     points = points[1:]
     trials = 0
     while not feasible and trials < 5:
         N_points = np.random.randint(len(removed))
@@ -313,7 +313,7 @@ def greedy_insertion(removed, routes, points, demands, Q):
 
 def fast_greedy_insertion(removed, routes, points, demands, Q):
     feasible = False
-    points = points[1:]
+    # points = points[1:]
     candidateRoutes = routes.copy()
     notInserted = removed.copy()
 
@@ -470,7 +470,7 @@ def fast_greedy_insertion(removed, routes, points, demands, Q):
 
 def random_insertion(removed,routes, points, demands, Q):
     feasible = False
-    points = points[1:]
+#     points = points[1:]
     trials = 0
     while not feasible and trials < 5:
 

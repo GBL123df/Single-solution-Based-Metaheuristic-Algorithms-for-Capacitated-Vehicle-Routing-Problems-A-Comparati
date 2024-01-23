@@ -11,48 +11,30 @@ N = 3
 #dall'algoritmo dbscan ottengo i cluster da cui tirerò fuori le prime routes, che creo con questa function
 def first_route(points,labels, C):
     routes = []
+    depot = points[0]
     points = points[1:]
     sol = 0
     for l in range(C):
         cluster_index = np.where(labels == l)
         cluster_index = cluster_index[0]
-        cluster_index = cluster_index[cluster_index > 0]
+        # cluster_index = cluster_index[cluster_index > 0]
         cluster_points = points[cluster_index]
-        
         added = np.zeros(np.size(cluster_index), dtype = bool)
         r = np.array(0,dtype='int32')
-        #r = np.append(r,0)
-
         not_Added_points = cluster_points
-
-        dist = np.linalg.norm(not_Added_points - points[0], axis=1)
+        dist = np.linalg.norm(not_Added_points - depot, axis=1)
         best_dist_index = np.argmin(dist)
-
         i = best_dist_index
-        r = np.append(r,  cluster_index[best_dist_index])
+        r = np.append(r,  cluster_index[best_dist_index] + 1)
         sol += dist[i]
         added[i] = True
         while np.all(added) == False: #or i <= np.size(cluster_index): #__WARNING!!! Ricontrollare QUI!!!___
-
-            # if added[cluster_index[0][i]] == True and i > 0 : #ricontrollare perchè così non funziona, siccome il controllo dovrebbe valere diverso...va modificata condizione nel while?
-            #     i += 1
-            #     continue
             not_Added_clu = np.where(added == False)
-
-
-            # if np.size(not_Added_clu[0]) == 0:
-            #     break
             not_Added_points = cluster_points[not_Added_clu[0]]
-            # if np.size(not_Added_clu[0]) <2:
-            #     r = np.append(r,cluster_index[0][not_Added_clu[0]])
-            #     break
             dist = np.linalg.norm(not_Added_points - cluster_points[i],axis=1)
             best_dist_index = np.argmin(dist)
-            # i = np.where(np.all(cluster_points == not_Added_points[best_dist_index], axis=1))
-            # i = np.where(np.all(cluster_points == not_Added_points[best_dist_index], axis=1))
-            # i = i[0].flatten()
             i = not_Added_clu[0][best_dist_index]
-            r = np.append(r,cluster_index[i])
+            r = np.append(r,cluster_index[i] + 1)
             sol += dist[best_dist_index]
             added[i] = True
             

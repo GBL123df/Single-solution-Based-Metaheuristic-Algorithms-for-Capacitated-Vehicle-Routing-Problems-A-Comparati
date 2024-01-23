@@ -514,7 +514,7 @@ class TestMyFunction(unittest.TestCase):
         file6 = os.path.join(self.path, file6)
         file7 = os.path.join(self.path, file7)
 
-        instance = inst.create_instance_from_file(file5)
+        instance = inst.create_instance_from_file(file7)
         # best_val_instance = 784
 
         points = np.array(instance.maps)
@@ -525,10 +525,11 @@ class TestMyFunction(unittest.TestCase):
         t1 = pfc()
         best_routes, sol = cvns.CluVNS(points, demands, Q, T, hmax=5)
         t2 = pfc()
-        feasible,_ = inst.constraints(best_routes,demands,Q)
         # X = inst.standard_form_solHigh(routes=best_routes, points=points)
         # route_cfr = inst.route_form_solHigh(X, points)
         # feas_std = inst.constraint_standardHigh(X, demands, Q)
+
+        inst.plot_routes(points=instance.maps,sol = True,routes = best_routes,arrows = False)
         if np.size(instance.maps) <= 1000:
             X = inst.standard_form_sol(routes=best_routes, points=points)
             route_cfr = inst.route_form_sol(X, points)
@@ -538,6 +539,38 @@ class TestMyFunction(unittest.TestCase):
             route_cfr = inst.route_form_solHigh(X, points)
             feas_std = inst.constraint_standardHigh(X, demands, Q)
         self.assertEqual(feasible,feas_std)
+
+    def test_algorithm_1(self):
+        tol = 50
+
+        percorso = "./Instanze/"
+        file = percorso + "A-n32-k5.txt"
+        file2 = percorso + "X-n101-k25.txt"
+        file3 = percorso + "Flanders2.txt"
+        file4 = percorso + "Antwerp1.txt"
+        file5 = percorso + "Ghent1.txt"
+        file6 = percorso + "P-n101-k4.txt"
+        file7 = percorso + "Golden_20.txt"
+
+        file = os.path.join(self.path, file)
+        file2 = os.path.join(self.path, file2)
+        file3 = os.path.join(self.path, file3)
+        file4 = os.path.join(self.path, file4)
+        file5 = os.path.join(self.path, file5)
+        file6 = os.path.join(self.path, file6)
+        file7 = os.path.join(self.path, file7)
+
+        instance = inst.create_instance_from_file(file)
+        # best_val_instance = 784
+        solution = instance.compute_sol(T=2,hmax=5)
+        feasible = solution.constraints()
+        solution.plot_routes()
+
+
+        points = np.array(instance.maps)
+        demands = np.array(instance.demands)
+        Q = instance.v_capacities
+        T = 1.0101987000000001
 
 if __name__ == '__main__':
     unittest.main()
