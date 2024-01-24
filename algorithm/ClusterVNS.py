@@ -37,7 +37,8 @@ def first_route(points,labels, C):
             r = np.append(r,cluster_index[i] + 1)
             sol += dist[best_dist_index]
             added[i] = True
-            
+        dist = np.linalg.norm(not_Added_points - depot, axis=1)
+        sol += dist[0]
         r = np.append(r,0)
         routes.append(r)
         
@@ -60,7 +61,7 @@ def shake(sol,routes,points,demands,Q,mode):
         routes,difference = hrst.neighbour(neigh_struct,routes, points, demands, Q, mode='feasible')
         sol = sol + difference
     elif mode == 'cocktail':
-        N = np.random.randint(low = 2,high = 5)
+        N = np.random.randint(low = 2,high = 10)
         i = 0
         while i < N:
             neigh_struct = np.random.choice(np.array([0, 1, 2, 3, 4, 5]))
@@ -204,7 +205,6 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,prob):
             print("\nFase 4 taboo controls = ", t_5-t_4,"\n" )
             print("\n",inst.constraints(routes,demands,Q),"\n")
 
-
         t = pfc()
     return routes,sol
 
@@ -212,6 +212,6 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,prob):
 
 def CluVNS(points,demands, Q,T,hmax):
     labels,cum_qt,C = clust.DBCVRI(points,demands,Q)
-    routes,sol = VNS(points, labels, demands, Q,T,C,hmax,len_Taboo = 5,prob = 0.1)
+    routes,sol = VNS(points, labels, demands, Q,T,C,hmax,len_Taboo = 5,prob = 0.5)
     return routes,sol
 

@@ -1,22 +1,98 @@
-import unittest
 import numpy as np
-import time
-from time import perf_counter as pfc
-from algorithm import Instance as inst
-from algorithm import clustering as clust
-from algorithm import heuristics as hrst
-import random
-import numpy as np
-from algorithm import ClusterVNS as cvns
-from algorithm import clustering as clu
-import matplotlib.pyplot as plt
-import logging
-import os
-import ortools as ort
 from ortools.constraint_solver import pywrapcp
-from ortools.constraint_solver import routing_enums_pb2#trovare le altre dipendenze
-from ortools.linear_solver import pywraplp
-from algorithm import orToolsSolver as ortS
+from ortools.constraint_solver import routing_enums_pb2
+from algorithm import Instance as inst
+from time import perf_counter as pfc
+class orTSolution(inst.Instance):
+    def __init__(self, solution = None,value = None, routes = None,feasible = False,time_execution = np.inf,local_search_metaheuristic = None,
+                 first_solution_strategy = None, time_limit_seconds = None,startRoutes = [], maps = [], demands = [], v_capacities = 0):
+        super().__init__(maps, demands, v_capacities)
+        self.routes = routes
+        self.solution = solution
+        self.value = value
+        self.feasible = feasible
+        self.time_execution = time_execution
+        self.local_search_metaheuristic = local_search_metaheuristic
+        self.first_solution_strategy = first_solution_strategy
+        self.time_limit_seconds = time_limit_seconds
+        if len(startRoutes) == 0:
+            self.startRoutes = []
+        else:
+            self.startRoutes = startRoutes
+
+
+    def get_solution(self):
+        data = create_data_model(self)
+        if len(self.startRoutes) == 0:
+            t1 = pfc()
+            self.solution,self.routes,self.value,_ = solve_cvrp(data,self.first_solution_strategy, self.local_search_metaheuristic,
+                                                                self.time_limit_seconds,start = False,startRoutes = [])
+            t2 = pfc()
+            self.time_execution = t2 - t1
+        else:
+            t1 = pfc()
+            self.solution, self.routes, self.value, _ = solve_cvrp(data, self.first_solution_strategy,
+                                                                   self.local_search_metaheuristic,
+                                                                   self.time_limit_seconds, start=True, startRoutes=self.startRoutes)
+            t2 = pfc()
+            self.time_execution = t2 - t1
+        return self.solution,self.routes,self.value
+
+    def constraints(self):
+        demands = self.demands
+        Q = self.v_capacities
+        routes = self.routes
+        self.feasible, _ = inst.constraints(routes,demands,Q)
+        return self.feasible
+
+    def standard_form_sol(self):
+        routes = self.routes
+        points = self.maps
+        self.solution = inst.standard_form_solHigh(routes,points)
+        return self.solution
+
+    def route_form_sol(self):
+        X = self.solution
+        points = self.maps
+        self.routes = inst.route_form_sol(X, points)
+        return self.routes
+
+    def constraint_standard(self):
+        X = self.solution
+        demands = self.demands
+        Q = self.v_capacities
+        self.feasible,_ = inst.constraint_standard(X, demands, Q)
+        return self.feasible
+
+    def standard_form_solHigh(self):
+        routes = self.routes
+        points = self.maps
+        self.solution = inst.standard_form_solHigh(routes, points)
+        return self.solution
+
+    def route_form_solHigh(self):
+        X = self.solution
+        points = self.maps
+        self.routes = inst.route_form_solHigh(X, points)
+        return self.routes
+
+    def constraint_standardHigh(self):
+        X = self.solution
+        demands = self.demands
+        Q = self.v_capacities
+        self.feasible = inst.constraint_standardHigh(X, demands, Q)
+        return self.feasible
+
+    def plot_routes(self,arrow = False):
+        inst.plot_routes(points=self.maps,sol=True,routes=self.routes,arrows=arrow)
+
+def solution_ORTools(instance,local_search_metaheuristic,first_solution_strategy, time_limit_seconds,startRoutes = []):
+    if len(startRoutes)==0:
+        solution = orTSolution(local_search_metaheuristic = local_search_metaheuristic,first_solution_strategy = first_solution_strategy,time_limit_seconds=time_limit_seconds,maps=instance.maps,demands=instance.demands,v_capacities=instance.v_capacities)
+    else:
+        solution = orTSolution(local_search_metaheuristic = local_search_metaheuristic,first_solution_strategy = first_solution_strategy,time_limit_seconds=time_limit_seconds,startRoutes=startRoutes,maps=instance.maps,demands=instance.demands,v_capacities=instance.v_capacities)
+    solution.get_solution()
+    return solution
 
 def create_data_model(instance):
     data = {}
@@ -138,7 +214,6 @@ def get_routes(solution, routing, manager):
 
 def solve_cvrp(data, first_solution_strategy, local_search_metaheuristic, time_limit_seconds,start,startRoutes):    # Instantiate the data problem.
 
-
     # Create the routing index manager.
     manager = pywrapcp.RoutingIndexManager(len(data['distance_matrix']),
                                            data['num_vehicles'], data['depot'])
@@ -209,118 +284,3 @@ def solve_cvrp(data, first_solution_strategy, local_search_metaheuristic, time_l
             routes.append(route)
     val = print_solution(data, manager, routing, solution)
     return solution,routes,val,routing
-class TestBenchmarking(unittest.TestCase):
-    def setUp(self):
-        current_file_path = os.path.abspath(__file__)
-
-        project_root = os.path.abspath(os.path.join(current_file_path, '..'))
-
-        self.path = project_root
-
-    def test_ortools1(self):
-        tol = 50
-
-        percorso = "./Instanze/"
-        file = percorso + "A-n32-k5.txt"
-        file2 = percorso + "X-n101-k25.txt"
-        file3 = percorso + "Flanders2.txt"
-        file4 = percorso + "Antwerp1.txt"
-        file5 = percorso + "Ghent1.txt"
-
-        file = os.path.join(self.path, file)
-        file2 = os.path.join(self.path, file2)
-        file3 = os.path.join(self.path, file3)
-        file4 = os.path.join(self.path, file4)
-        file5 = os.path.join(self.path, file5)
-
-        instance = inst.create_instance_from_file(file2)
-        data = create_data_model(instance)
-        # best_val_instance = 784
-        t1 = pfc()
-        solution, routes, val, routing = solve_cvrp(data,
-                                             first_solution_strategy=routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
-                                             local_search_metaheuristic=routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING,
-                                             time_limit_seconds=10,start=False,startRoutes=[])
-        print("\nroutes=\n",routes,"\n value = \n",val)
-        t2 = pfc()
-        solvingTime = t2 - t1
-        print("\n",solvingTime,"\n")
-        # self.assertGreaterEqual(tol, val - best_val_instance)
-        best_routes, sol = cvns.CluVNS(instance.maps, instance.demands, instance.v_capacities, 1, hmax=5)
-
-    def test_ortools2(self):
-        tol = 50
-
-        percorso = "./Instanze/"
-        file = percorso + "A-n32-k5.txt"
-        file2 = percorso + "X-n101-k25.txt"
-        file3 = percorso + "Flanders2.txt"
-        file4 = percorso + "Antwerp1.txt"
-        file5 = percorso + "Ghent1.txt"
-
-        file = os.path.join(self.path, file)
-        file2 = os.path.join(self.path, file2)
-        file3 = os.path.join(self.path, file3)
-        file4 = os.path.join(self.path, file4)
-        file5 = os.path.join(self.path, file5)
-
-        instance = inst.create_instance_from_file(file5)
-        data = create_data_model(instance)
-        label, cum_qt, C =clu.DBCVRI(instance.maps,instance.demands,instance.v_capacities)
-        startRoutes,sol_start = cvns.first_route(instance.maps,label,C)
-        # best_val_instance = 784
-        t1 = pfc()
-
-        solution, routes, val, routing = solve_cvrp(data,
-                                           first_solution_strategy=routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
-                                           local_search_metaheuristic=routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING,
-                                           time_limit_seconds=1,start=True,startRoutes=startRoutes)
-        print("\nroutes=\n", routes, "\n value = \n", val)
-        t2 = pfc()
-        solvingTime = t2 - t1
-        print("\n", solvingTime, "\n")
-
-        X = inst.standard_form_sol(routes,instance.maps)
-        rtcfr,_ = inst.constraints(routes,instance.demands,instance.v_capacities)
-        solcfr = inst.constraint_standard(X,instance.demands,instance.v_capacities)
-        self.assertEqual(rtcfr,solcfr)
-        # self.assertGreaterEqual(tol, val - best_val_instance)
-
-    def test_ortools3(self):
-        tol = 50
-
-        percorso = "./Instanze/"
-        file = percorso + "A-n32-k5.txt"
-        file2 = percorso + "X-n101-k25.txt"
-        file3 = percorso + "Flanders2.txt"
-        file4 = percorso + "Antwerp1.txt"
-        file5 = percorso + "Ghent1.txt"
-
-        file = os.path.join(self.path, file)
-        file2 = os.path.join(self.path, file2)
-        file3 = os.path.join(self.path, file3)
-        file4 = os.path.join(self.path, file4)
-        file5 = os.path.join(self.path, file5)
-
-        instance = inst.create_instance_from_file(file2)
-        t1 = pfc()
-
-        sol = ortS.solution_ORTools(instance,first_solution_strategy=routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
-                                           local_search_metaheuristic=routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING,
-                                    time_limit_seconds=1)
-        t2 = pfc()
-
-        t3 = pfc()
-        solution = instance.compute_sol(T=1, hmax=5)
-        t4 = pfc()
-        feasible = solution.constraints()
-        solution.plot_routes()
-        sol.plot_routes()
-        time_ortools = t2-t1
-        time_cvns = t4-t3
-if __name__ == '__main__':
-    unittest.main()
-    test_suite = unittest.TestLoader().loadTestsFromTestCase(TestBenchmarking)
-    test_result = unittest.TextTestRunner().run(test_suite)
-
-

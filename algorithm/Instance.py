@@ -3,6 +3,8 @@ import re
 from scipy.sparse import csc_matrix
 from algorithm.ClusterVNS import CluVNS
 import matplotlib.pyplot as plt
+from time import perf_counter as pfc
+# from algorithm import orToolsSolver as ortS
 
 class Instance:
     
@@ -11,9 +13,6 @@ class Instance:
         self.demands = demands  # List of demands for each customer
         self.v_capacities = v_capacities  # List of vehicle capacities
         #self.num_vehicles = num_vehicles  # Number of available vehicles
-        
-
-    
 
     def distance_matrix(self):#calcolo della matrice delle distanze, ma troppo pesante sulla memoria per grandi istanze; 
         """
@@ -28,19 +27,25 @@ class Instance:
         return distance_matrix
 
     def compute_sol(self,T,hmax):
+        t1 = pfc()
         solution = CluVNS(self.maps,self.demands,self.v_capacities,T,hmax)
-        return Solution(routes=solution[0],value=solution[1],maps = self.maps, demands = self.demands, v_capacities = self.v_capacities)
+        t2 = pfc()
+        return Solution(routes=solution[0],value=solution[1],time_execution= t2 - t1,maps = self.maps, demands = self.demands, v_capacities = self.v_capacities)
+
+
+
 
     def plot_map(self):
         plot_routes(points=self.maps)
 
 class Solution(Instance):
-    def __init__(self, routes = None,value = None, solution = None,feasible = False, maps = [], demands = [], v_capacities = 0):
+    def __init__(self, routes = None,value = None, solution = None,feasible = False,time_execution = np.inf, maps = [], demands = [], v_capacities = 0):
         super().__init__(maps, demands, v_capacities)
         self.routes = routes
         self.solution = solution
         self.value = value
         self.feasible = feasible
+        self.time_execution = time_execution
 
     def constraints(self):
         demands = self.demands
@@ -52,7 +57,7 @@ class Solution(Instance):
     def standard_form_sol(self):
         routes = self.routes
         points = self.maps
-        self.solution = standard_form_solHigh(routes,points)
+        self.solution = standard_form_sol(routes,points)
         return self.solution
 
     def route_form_sol(self):
@@ -95,7 +100,6 @@ class Solution(Instance):
 
 
 #This function helps to build an Instance object from the text files downloaded from http://vrp.atd-lab.inf.puc-rio.br/index.php/en/
-
 
 
 def create_instance_from_file(file_path):
@@ -336,6 +340,13 @@ def plot_routes( points,sol = False,routes = [],arrows = False):
     plt.grid(True)
     plt.show()
 
+def total_euclidean_distance(routes, points):
+    total_distance = 0
 
+    for route in routes:
+        route_points = points[route]
+        distances = np.linalg.norm(route_points[1:] - route_points[:-1], axis=1)
+        total_distance += np.sum(distances)
 
+    return total_distance
 

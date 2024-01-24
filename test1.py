@@ -567,10 +567,7 @@ class TestMyFunction(unittest.TestCase):
         solution.plot_routes()
 
 
-        points = np.array(instance.maps)
-        demands = np.array(instance.demands)
-        Q = instance.v_capacities
-        T = 1.0101987000000001
+
 
 if __name__ == '__main__':
     unittest.main()
