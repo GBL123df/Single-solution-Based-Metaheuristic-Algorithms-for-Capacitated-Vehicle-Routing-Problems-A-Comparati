@@ -302,7 +302,7 @@ class TestBenchmarking(unittest.TestCase):
         file4 = os.path.join(self.path, file4)
         file5 = os.path.join(self.path, file5)
 
-        instance = inst.create_instance_from_file(file2)
+        instance = inst.create_instance_from_file(file)
         t1 = pfc()
 
         sol = ortS.solution_ORTools(instance,first_solution_strategy=routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
@@ -311,8 +311,9 @@ class TestBenchmarking(unittest.TestCase):
         t2 = pfc()
 
         t3 = pfc()
-        solution = instance.compute_sol(T=1, hmax=5)
+        solution = instance.compute_sol(T=3, hmax=5)
         t4 = pfc()
+        print("\nval= \n",solution.value,"\n")
         feasible = solution.constraints()
         solution.plot_routes()
         sol.plot_routes()

@@ -618,10 +618,17 @@ def repair(removed,routes, points, demands, Q,routestart):
         return routesMod
 
 
-def destroyAndRepair(routes, points, demands, Q): #, N):
-    routes, removed = destroy(routes, points, demands, Q) #, N)
-    routes = repair(removed, routes, points, demands, Q,routes)
-    sol = 0
-    for r in routes:
-        sol += hrst.dist(points[r])
-    return routes,sol
+def destroyAndRepair(routes,sol, points, demands, Q): #, N):
+    new_routes, removed = destroy(routes, points, demands, Q) #, N)
+    new_routes = repair(removed, new_routes, points, demands, Q,routes)
+    routes_hpstack = np.unique(np.hstack([route[1:-1] for route in routes]))
+    new_routes_hpstack = np.unique(np.hstack([route[1:-1] for route in routes]))
+    if np.size(routes_hpstack) != np.size(new_routes_hpstack):
+        return routes,sol
+    elif np.any(routes_hpstack != new_routes_hpstack):
+        return routes,sol
+    else:
+        new_sol = 0
+        for r in new_routes:
+            new_sol += hrst.dist(points[r])
+        return new_routes,new_sol

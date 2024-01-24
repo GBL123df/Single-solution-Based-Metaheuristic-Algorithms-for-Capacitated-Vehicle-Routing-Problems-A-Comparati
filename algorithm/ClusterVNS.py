@@ -55,19 +55,19 @@ def first_route(points,labels, C):
 def shake(sol,routes,points,demands,Q,mode):
     # neigh_struct = np.random.randint(0,N + 1) #in base a quanti tipi di strutture di vicinato inserisco decido N che sarà costante
     if mode == 'one':
-        neigh_struct = np.random.choice(np.array([0,1,2,3,4,5]))
-        # neigh_struct = np.random.choice(np.array([1,2,3,4,5]))
+        # neigh_struct = np.random.choice(np.array([0,1,2,3,4,5]))
+        neigh_struct = np.random.choice(np.array([0,4,5]))
         # neigh_struct = 0
-        routes,difference = hrst.neighbour(neigh_struct,routes, points, demands, Q, mode='feasible')
+        routes,difference = hrst.neighbour(neigh_struct,routes, points, demands, Q)
         sol = sol + difference
     elif mode == 'cocktail':
         N = np.random.randint(low = 2,high = 10)
         i = 0
         while i < N:
-            neigh_struct = np.random.choice(np.array([0, 1, 2, 3, 4, 5]))
-            # neigh_struct = np.random.choice(np.array([1,2,3,4,5]))
+            # neigh_struct = np.random.choice(np.array([0, 1, 2, 3, 4, 5]))
+            neigh_struct = np.random.choice(np.array([0,4,5]))
             # neigh_struct = 0
-            routes, difference = hrst.neighbour(neigh_struct, routes, points, demands, Q, mode='feasible')
+            routes, difference = hrst.neighbour(neigh_struct, routes, points, demands, Q)
             sol = sol + difference
             i += 1
     return routes,sol
@@ -80,8 +80,8 @@ def first_improvement(sol,routes,points,demands,Q,hmax):
 
     difference = np.inf
     # neigh_struct = 0
-    n_str = np.array([0,1,2,3,4,5])
-    # n_str = np.array([1,2,3,4,5])
+    # n_str = np.array([0,1,2,3,4,5])
+    n_str = np.array([0,4,5])
     # n_str = np.array([0,5])
     i = 0
     # neigh_struct = n_str[i]
@@ -90,7 +90,7 @@ def first_improvement(sol,routes,points,demands,Q,hmax):
     taboo.append(neigh_struct)
     h = 0
     while difference >= 0 and h < hmax:
-        new_routes, difference = hrst.neighbour(neigh_struct,routes, points, demands, Q, mode='feasible')
+        new_routes, difference = hrst.neighbour(neigh_struct,routes, points, demands, Q)
         neigh_struct = np.random.choice(np.setdiff1d(n_str, taboo))
         #the complexity is good using a random choice, on stack overflow is written that complexity is about o(1)
         taboo.append(neigh_struct)
@@ -120,21 +120,14 @@ def first_improvement(sol,routes,points,demands,Q,hmax):
 
 # def make_it_feasible(sol,routes,points,demands,Q):
 
-def equalSol(x1,x2):
-
+def equalSol(couple1,couple2):
+    x1,sol1 = couple1
+    x2,sol2 = couple2
     if len(x1) != len(x2):
         return False
     else:
         x2_nv = x2.copy()
-        # for xi,i in enumerate(x1):
-        #     for xj,j in enumerate(x2_nv):
-        #         if np.size(xi) == np.size(xj):
-        #             if xi == xj:
-        #                 i += 1
-        #                 xi = x1[i]
-        #                 x2_nv.remove(xj)
-        #                 j = 0
-        #                 xj = x2_nv[0]
+
 
 
         all_in_x2_nv = all(any(np.array_equal(xi, xj) for xj in x2_nv) for xi in x1)
@@ -156,7 +149,7 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,prob):
     while t - t0 <= T:
         t_1 = pfc()
         if taboo_counter > 3:
-            p = max(1,p*1.5)
+            p = min(1,p*1.5)
         else:
             p = prob
         destFactor = np.random.choice(np.array([0,1]),p = np.array([p,1 - p]))
@@ -164,7 +157,7 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,prob):
         x0 = routes.copy()
         if destFactor == 0:
             # N = np.random.randint(1,3)
-            x0,sol0 = dstrp.destroyAndRepair(routes,points,demands,Q)
+            x0,sol0 = dstrp.destroyAndRepair(x0,sol0,points,demands,Q)
 
         if debug:
             t_2 = pfc()
@@ -189,11 +182,12 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,prob):
             print("\n",inst.constraints(x2,demands,Q),"\n")
 
         for old in taboo:
-            if equalSol(x2,old):
+            if equalSol((x2,sol2),old):
                 t = pfc()
                 taboo_counter += 1
                 continue
-        if sol2 - sol < 0 and inst.constraints(x2,demands,Q) == True:
+        feasible,_ = inst.constraints(x2,demands,Q)
+        if sol2 - sol < 0 and feasible == True:
             routes = x2
             sol = sol2
             taboo.append((routes,sol))
@@ -212,6 +206,6 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,prob):
 
 def CluVNS(points,demands, Q,T,hmax):
     labels,cum_qt,C = clust.DBCVRI(points,demands,Q)
-    routes,sol = VNS(points, labels, demands, Q,T,C,hmax,len_Taboo = 5,prob = 0.5)
+    routes,sol = VNS(points, labels, demands, Q,T,C,hmax,len_Taboo = 5,prob = 0.05)
     return routes,sol
 
