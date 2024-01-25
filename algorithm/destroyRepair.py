@@ -39,7 +39,7 @@ def random_client_removal(routes, points, demands, Q):
                 where = np.where(tBR == final_toBeRemoved)[0]
                 final_toBeRemoved = np.delete(final_toBeRemoved,where)
                 continue
-        feasible,candidateRoutes = inst.constraints(candidateRoutes,demands,Q)
+        feasible,candidateRoutes,_ = inst.constraints(candidateRoutes,demands,Q)
 
     return candidateRoutes,final_toBeRemoved
 
@@ -81,7 +81,7 @@ def zone_removal(routes, points, demands, Q):
                 where = np.where(tBR == final_toBeRemoved)[0]
                 final_toBeRemoved = np.delete(final_toBeRemoved, where)
                 continue
-        feasible, candidateRoutes = inst.constraints(candidateRoutes, demands, Q)
+        feasible, candidateRoutes,_ = inst.constraints(candidateRoutes, demands, Q)
     return candidateRoutes,final_toBeRemoved
 
 
@@ -117,7 +117,7 @@ def prox_based_removal(routes, points, demands, Q):
                         continue
                     candidateRoutes[i] = np.delete(candidateRoutes[i], np.array([cancel,tBRP]))
                     toBeRemovedProximal = np.append(toBeRemovedProximal,r[tBRP])
-        feasible, candidateRoutes = inst.constraints(candidateRoutes, demands, Q)
+        feasible, candidateRoutes,_ = inst.constraints(candidateRoutes, demands, Q)
     return candidateRoutes,toBeRemovedProximal
 
 
@@ -296,7 +296,7 @@ def greedy_insertion(removed, routes, points, demands, Q):
                 candidateRoutes[best_position[0]] = np.insert(candidateRoutes[best_position[0]], best_position[1], p)
                 remove = np.where(notInserted == p)[0]
                 notInserted = np.delete(notInserted,remove)
-        feasible, candidateRoutes = inst.constraints(candidateRoutes, demands, Q)
+        feasible, candidateRoutes,_ = inst.constraints(candidateRoutes, demands, Q)
         trials+=1
     if feasible:
         remained = toBeInserted.copy()
@@ -451,8 +451,8 @@ def fast_greedy_insertion(removed, routes, points, demands, Q):
             candidateRoutes[where] = vector
             remove = np.where(notInserted == p)[0]
             notInserted = np.delete(notInserted, remove)
-            feasible, candidateRoutes = inst.constraints(candidateRoutes, demands, Q)
-        feasible,candidateRoutes =  inst.constraints(candidateRoutes, demands, Q)
+            feasible, candidateRoutes,_ = inst.constraints(candidateRoutes, demands, Q)
+        feasible,candidateRoutes ,_=  inst.constraints(candidateRoutes, demands, Q)
         trials+=1
     if feasible:
         remained = toBeInserted.copy()
@@ -578,7 +578,7 @@ def random_insertion(removed,routes, points, demands, Q):
             candidateRoutes[r_index] = vector
             remove = np.where(notInserted == p)[0]
             notInserted = np.delete(notInserted, remove)
-            feasible, candidateRoutes = inst.constraints(candidateRoutes, demands, Q)
+            feasible, candidateRoutes,_ = inst.constraints(candidateRoutes, demands, Q)
         remained = toBeInserted.copy()
         i = 0
         while i < np.size(final_toBeInserted):
@@ -587,7 +587,7 @@ def random_insertion(removed,routes, points, demands, Q):
             remained = np.delete(remained, where)
             i += 1
         notInserted = np.concatenate([notInserted, remained])
-        feasible = inst.constraints(candidateRoutes,demands,Q)
+        feasible,_ = inst.constraints(candidateRoutes,demands,Q)
         trials += 1
     if not feasible:
         return routes,removed
@@ -607,7 +607,7 @@ def repair(removed,routes, points, demands, Q,routestart):
             routesNew, remotion = fast_greedy_insertion(remotion,routesMod, points, demands, Q)
         if movement == 2:#ricontrollare inserimenti e rimozioni
              routesNew, remotion = random_insertion(remotion,routesMod, points, demands, Q)
-        feasible,routesNew = inst.constraints(routesNew,demands,Q)
+        feasible,routesNew, _ = inst.constraints(routesNew,demands,Q)
         routes_trunk = [route[1:-1] for route in routesNew]
         monoRoute = np.hstack(routes_trunk)
         if feasible and np.size(np.concatenate([monoRoute, remotion])) != total - 1:

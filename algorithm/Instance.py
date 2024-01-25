@@ -148,11 +148,16 @@ def create_instance_from_file(file_path):
 
 def constraints(routes,demands,Q):
     filtered_routes = []
-    for r in routes:
+    deleted = []
+    for i,r in enumerate(routes):
         if r[0] == 0 and np.all(r[1:-1] != r[0]) and r[-1] == 0 and len(r) >= 3:
             # Append only the valid routes to the new list
             filtered_routes.append(r)
+        else:
+            deleted.append(i)
 
+    if len(routes) == 0:
+        return False, routes,np.array(deleted)
     # Update the routes list with the filtered routes
     routes = filtered_routes
 
@@ -164,21 +169,22 @@ def constraints(routes,demands,Q):
         #____WARNING!! SCEGLIERE LE CONSTRAINTS DA UTILIZZARE IN QUESTA PRIMA VERSIONE!!____
         if np.sum(demand_route) > Q or route[0] != 0 or route[l_r-1] != 0 :
             feasible = False
-            return feasible,routes
+            return feasible,routes,np.array(deleted)
 
     routes_trunk = [route[1:-1] for route in routes]
-
+    if len(routes_trunk) == 0:
+        return False, routes,np.array(deleted)
     if np.any(routes_trunk == 0):
         feasible = False
-        return feasible,routes
+        return feasible,routes,np.array(deleted)
     routes_hpstack = np.hstack(routes_trunk)
     if np.size(routes_hpstack) != np.size(np.unique(routes_hpstack)):
         feasible = False
-        return feasible,routes
+        return feasible,routes,np.array(deleted)
     if np.any(np.sort(routes_hpstack) != np.unique(routes_hpstack)):
         feasible = False
-        return feasible,routes
-    return feasible,routes
+        return feasible,routes,np.array(deleted)
+    return feasible,routes,np.array(deleted)
 
 def standard_form_sol(routes,points):
     X = np.zeros([np.size(points,axis=0)-1,np.size(points,axis=0),np.size(points,axis=0)])

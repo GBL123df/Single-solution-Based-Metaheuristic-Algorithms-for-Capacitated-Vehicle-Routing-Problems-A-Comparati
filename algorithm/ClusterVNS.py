@@ -55,8 +55,8 @@ def first_route(points,labels, C):
 def shake(sol,routes,points,demands,Q,mode):
     # neigh_struct = np.random.randint(0,N + 1) #in base a quanti tipi di strutture di vicinato inserisco decido N che sarà costante
     if mode == 'one':
-        # neigh_struct = np.random.choice(np.array([0,1,2,3,4,5]))
-        neigh_struct = np.random.choice(np.array([0,4,5]))
+        neigh_struct = np.random.choice(np.array([0,1,2,3,4,5]))
+        # neigh_struct = np.random.choice(np.array([1,3]))
         # neigh_struct = 0
         routes,difference = hrst.neighbour(neigh_struct,routes, points, demands, Q)
         sol = sol + difference
@@ -64,8 +64,8 @@ def shake(sol,routes,points,demands,Q,mode):
         N = np.random.randint(low = 2,high = 10)
         i = 0
         while i < N:
-            # neigh_struct = np.random.choice(np.array([0, 1, 2, 3, 4, 5]))
-            neigh_struct = np.random.choice(np.array([0,4,5]))
+            neigh_struct = np.random.choice(np.array([0,1,2,3,4,5]))
+#             neigh_struct = np.random.choice(np.array([1,3]))
             # neigh_struct = 0
             routes, difference = hrst.neighbour(neigh_struct, routes, points, demands, Q)
             sol = sol + difference
@@ -77,11 +77,11 @@ def shake(sol,routes,points,demands,Q,mode):
 
 #fase di miglioramento del vicinato
 def first_improvement(sol,routes,points,demands,Q,hmax):
-
     difference = np.inf
     # neigh_struct = 0
-    # n_str = np.array([0,1,2,3,4,5])
-    n_str = np.array([0,4,5])
+    n_str = np.array([0,1,2,3,4,5])
+    # n_str = np.array([0,1,2,3])
+#     n_str = np.array([1,3])
     # n_str = np.array([0,5])
     i = 0
     # neigh_struct = n_str[i]
@@ -98,19 +98,11 @@ def first_improvement(sol,routes,points,demands,Q,hmax):
             taboo = []
             taboo.append(neigh_struct)
             h += 1
-
-        # if neigh_struct == n_str[-1]:
-        #     i = 0
-        #     neigh_struct = n_str[i]
-        #     h += 1
-        # else:
-        #     i += 1
-        #     neigh_struct = n_str[i]
-
-    routes = new_routes
-    sol = sol + difference
-    
-    return routes,sol
+        if difference < 0:
+            new_sol = sol + difference
+            return new_routes,new_sol
+        else:
+            return routes,sol
 
 
 #funzione obbiettivo
@@ -164,7 +156,7 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,prob):
             print("\nFase 1 destRec = ", t_2-t_1,"\n" )
             print("\n",inst.constraints(x0,demands,Q),"\n")
 
-        if taboo_counter > 3:
+        if taboo_counter > 2:
             mode = 'cocktail'
         x1,sol1 = shake(sol0,x0,points,demands,Q,mode)
         mode = 'one'
@@ -186,7 +178,7 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,prob):
                 t = pfc()
                 taboo_counter += 1
                 continue
-        feasible,_ = inst.constraints(x2,demands,Q)
+        feasible,_,_ = inst.constraints(x2,demands,Q)
         if sol2 - sol < 0 and feasible == True:
             routes = x2
             sol = sol2
@@ -206,6 +198,6 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,prob):
 
 def CluVNS(points,demands, Q,T,hmax):
     labels,cum_qt,C = clust.DBCVRI(points,demands,Q)
-    routes,sol = VNS(points, labels, demands, Q,T,C,hmax,len_Taboo = 5,prob = 0.05)
+    routes,sol = VNS(points, labels, demands, Q,T,C,hmax,len_Taboo = 5,prob = 0.1)
     return routes,sol
 
