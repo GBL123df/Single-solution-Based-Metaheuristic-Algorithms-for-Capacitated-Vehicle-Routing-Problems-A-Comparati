@@ -57,7 +57,7 @@ def shake(sol,routes,points,demands,Q,mode):
     if mode == 'one':
         neigh_struct = np.random.choice(np.array([0,1,2,3,4,5]))
         # neigh_struct = np.random.choice(np.array([1,3]))
-        # neigh_struct = 0
+        # neigh_struct = 2
         routes,difference = hrst.neighbour(neigh_struct,routes, points, demands, Q)
         sol = sol + difference
     elif mode == 'cocktail':
@@ -66,7 +66,7 @@ def shake(sol,routes,points,demands,Q,mode):
         while i < N:
             neigh_struct = np.random.choice(np.array([0,1,2,3,4,5]))
 #             neigh_struct = np.random.choice(np.array([1,3]))
-            # neigh_struct = 0
+#             neigh_struct = 2
             routes, difference = hrst.neighbour(neigh_struct, routes, points, demands, Q)
             sol = sol + difference
             i += 1
@@ -82,7 +82,7 @@ def first_improvement(sol,routes,points,demands,Q,hmax):
     n_str = np.array([0,1,2,3,4,5])
     # n_str = np.array([0,1,2,3])
 #     n_str = np.array([1,3])
-    # n_str = np.array([0,5])
+#     n_str = np.array([2])
     i = 0
     # neigh_struct = n_str[i]
     neigh_struct = np.random.choice(n_str)
@@ -90,14 +90,18 @@ def first_improvement(sol,routes,points,demands,Q,hmax):
     taboo.append(neigh_struct)
     h = 0
     while difference >= 0 and h < hmax:
-        new_routes, difference = hrst.neighbour(neigh_struct,routes, points, demands, Q)
-        neigh_struct = np.random.choice(np.setdiff1d(n_str, taboo))
-        #the complexity is good using a random choice, on stack overflow is written that complexity is about o(1)
-        taboo.append(neigh_struct)
-        if np.size(np.setdiff1d(n_str, taboo)) == 0:
-            taboo = []
-            taboo.append(neigh_struct)
+        if len(n_str) == 1:
+            new_routes, difference = hrst.neighbour(neigh_struct, routes, points, demands, Q)
             h += 1
+        else:
+            new_routes, difference = hrst.neighbour(neigh_struct,routes, points, demands, Q)
+            neigh_struct = np.random.choice(np.setdiff1d(n_str, taboo))
+        #the complexity is good using a random choice, on stack overflow is written that complexity is about o(1)
+            taboo.append(neigh_struct)
+            if np.size(np.setdiff1d(n_str, taboo)) == 0:
+                taboo = []
+                taboo.append(neigh_struct)
+                h += 1
         if difference < 0:
             new_sol = sol + difference
             return new_routes,new_sol

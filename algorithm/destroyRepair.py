@@ -16,109 +16,323 @@ from algorithm import heuristics as hrst
 
 
 ######DESTROY#########
+# def random_client_removal(routes, points, demands, Q):
+#     # points = points[1:]
+#     routes_trunk = [route[1:-1] for route in routes]
+#     routes_hpstack = np.hstack(routes_trunk)
+#     indexes = np.unique(routes_hpstack)
+#     feasible = False
+#     while feasible == False:
+#         candidateRoutes = routes.copy()
+#         N_points = np.random.randint(np.size(indexes)//2)  # eventualmente modificare questo criterio di scelta
+#         toBeRemoved = np.random.choice(indexes,replace=False,size=N_points)
+#         final_toBeRemoved = toBeRemoved.copy()
+#         for tBR in toBeRemoved:
+#             canceled = False
+#             for i,r in enumerate(candidateRoutes):
+#                 cancel = np.where(tBR == r)[0]
+#                 if np.size(cancel) == 1:
+#                     cancel = int(cancel)
+#                     candidateRoutes[i] = np.delete(candidateRoutes[i], cancel)
+#                     canceled = True
+#             if not canceled:
+#                 where = np.where(tBR == final_toBeRemoved)[0]
+#                 final_toBeRemoved = np.delete(final_toBeRemoved,where)
+#                 continue
+#         feasible,candidateRoutes,_ = inst.constraints(candidateRoutes,demands,Q)
+#
+#     return candidateRoutes,final_toBeRemoved
+
+# def random_client_removal(routes, points, demands, Q):#più recente
+#     routes_trunk = [route[1:-1] for route in routes]
+#     indexes = np.concatenate(routes_trunk)
+#
+#     feasible = False
+#     while not feasible:
+#         candidateRoutes = routes.copy()
+#
+#         # Verifica che ci siano almeno due indici disponibili prima di generare un numero casuale
+#         if np.size(indexes) < 2:
+#             return routes, 0
+#
+#         N_points = min(np.random.randint(np.size(indexes) // 2), np.size(indexes) - 1)
+#         toBeRemoved = np.random.choice(indexes, replace=False, size=N_points)
+#         final_toBeRemoved = toBeRemoved.copy()
+#
+#         for tBR in toBeRemoved:
+#             canceled = False
+#             for i, r in enumerate(candidateRoutes):
+#                 cancel = np.where(tBR == r)[0]
+#                 if np.size(cancel) == 1:
+#                     cancel = int(cancel)
+#                     candidateRoutes[i] = np.delete(candidateRoutes[i], cancel)
+#                     canceled = True
+#             if not canceled:
+#                 where = np.where(tBR == final_toBeRemoved)[0]
+#                 final_toBeRemoved = np.delete(final_toBeRemoved, where)
+#                 continue
+#
+#         feasible, candidateRoutes, _ = inst.constraints(candidateRoutes, demands, Q)
+#
+#     return candidateRoutes, final_toBeRemoved
+
+
+
+
+
+# def zone_removal(routes, points, demands, Q):
+# #     points = points[1:]
+#     routes_trunk = [route[1:-1] for route in routes]
+#     routes_hpstack = np.hstack(routes_trunk)
+#     indexes = np.unique(routes_hpstack)
+#     feasible = False
+#     while feasible == False:
+#         candidateRoutes = routes.copy()
+#         center = np.random.choice(indexes)
+#         #continuare simulando i lati (si può scegliere una distribuzione normale con media 0 e  varianza con quella
+#         # campionaria, dove i campioni nel nostro caso possono essere tutti gli altri punti della mappa
+#         distancesAxes = np.abs(points - points[center])
+#         stdX = np.std(distancesAxes[:,0])
+#         stdY = np.std(distancesAxes[:, 1])
+#         deltaX = np.abs(np.random.normal(scale=stdX))
+#         deltaY = np.abs(np.random.normal(scale=stdY))
+#         preBeRemoved = []
+#         preBeRemoved.append(center)
+#         for i,p in enumerate(points):
+#             distance = np.abs(p - points[center])
+#             if distance[0] < deltaX and distance[1] < deltaY:
+#                 preBeRemoved.append(i)
+#         preBeRemoved = np.array(preBeRemoved)
+#         N_points = np.random.randint(np.size(preBeRemoved))
+#         toBeRemoved = np.random.choice(preBeRemoved,size=N_points,replace=False)
+#         final_toBeRemoved = toBeRemoved.copy()
+#         for tBR in toBeRemoved:
+#             canceled = False
+#             for i, r in enumerate(candidateRoutes):
+#                 cancel = np.where(tBR == r)[0]
+#                 if np.size(cancel) == 1:
+#                     candidateRoutes[i] = np.delete(candidateRoutes[i], cancel)
+#                     canceled = True
+#             if not canceled:
+#                 where = np.where(tBR == final_toBeRemoved)[0]
+#                 final_toBeRemoved = np.delete(final_toBeRemoved, where)
+#                 continue
+#         feasible, candidateRoutes,_ = inst.constraints(candidateRoutes, demands, Q)
+#     return candidateRoutes,final_toBeRemoved
+
+# def zone_removal(routes, points, demands, Q):
+#     routes_trunk = [route[1:-1] for route in routes]
+#     routes_hpstack = np.hstack(routes_trunk)
+#     indexes = np.unique(routes_hpstack)
+#
+#     feasible = False
+#     while not feasible:
+#         candidateRoutes = routes.copy()
+#         center = np.random.choice(indexes)
+#
+#         # Continuare simulando i lati (si può scegliere una distribuzione normale con media 0 e
+#         # varianza con quella campionaria, dove i campioni nel nostro caso possono essere tutti gli altri punti della mappa
+#         distancesAxes = np.abs(points - points[center])
+#         stdX = np.std(distancesAxes[:, 0])
+#         stdY = np.std(distancesAxes[:, 1])
+#         deltaX = np.abs(np.random.normal(scale=stdX))
+#         deltaY = np.abs(np.random.normal(scale=stdY))
+#
+#         preBeRemoved = [center]
+#
+#         for i, p in enumerate(points):
+#
+#             distance = np.abs(p - points[center])
+#             if distance[0] < deltaX and distance[1] < deltaY:
+#                 preBeRemoved.append(i)
+#
+#         preBeRemoved = np.array(preBeRemoved)
+#         N_points = np.random.randint(np.size(preBeRemoved))
+#
+#         toBeRemoved = np.random.choice(preBeRemoved, size=N_points, replace=False)
+#         final_toBeRemoved = toBeRemoved.copy()
+#
+#         for tBR in toBeRemoved:
+#             for i, r in enumerate(candidateRoutes):
+#                 cancel = np.where(tBR == r)[0]
+#                 if np.size(cancel) == 1:
+#                     candidateRoutes[i] = np.delete(candidateRoutes[i], cancel)
+#
+#         # Elimina i nodi da final_toBeRemoved che non sono stati rimossi da candidateRoutes
+#         final_toBeRemoved = np.intersect1d(final_toBeRemoved, np.hstack(candidateRoutes))
+#
+#         feasible, candidateRoutes, _ = inst.constraints(candidateRoutes, demands, Q)
+#
+#     return candidateRoutes, final_toBeRemoved
+
+
+# def prox_based_removal(routes, points, demands, Q):
+# #     points = points[1:]
+#     routes_trunk = [route[1:-1] for route in routes]
+#     routes_hpstack = np.hstack(routes_trunk)
+#     indexes = np.unique(routes_hpstack)
+#     feasible = False
+#     while feasible == False:
+#         N_points = np.random.randint(np.size(indexes, axis=0) // 2)  # eventualmente modificare questo criterio di scelta
+#         candidateRoutes = routes.copy()
+#         toBeRemoved = np.random.choice(indexes, replace=False, size=N_points)
+#         toBeRemovedProximal = toBeRemoved.copy()
+#         for tBR in toBeRemoved:
+#             for i, r in enumerate(candidateRoutes):
+#                 cancel = np.where(tBR == r)[0]
+#                 if np.size(cancel) == 1:
+#                     cancel = int(cancel)
+#                     if cancel == 1:
+#                         tBRP = cancel + 1
+#                     elif cancel == np.size(r) - 1:
+#                         tBRP = cancel - 1
+#                     elif 1 < cancel < np.size(r) - 2:
+#                         tBRP = np.random.choice([cancel - 1, cancel + 1])
+#                     else:
+#                         dove = np.where(toBeRemovedProximal == tBR)[0]
+#                         toBeRemovedProximal = np.delete(toBeRemovedProximal, dove)
+#                         continue
+#                     if np.size(candidateRoutes[i]) <= 3:
+#                         dove = np.where(toBeRemovedProximal == tBR)[0]
+#                         toBeRemovedProximal = np.delete(toBeRemovedProximal,dove)
+#                         continue
+#                     candidateRoutes[i] = np.delete(candidateRoutes[i], np.array([cancel,tBRP]))
+#                     toBeRemovedProximal = np.append(toBeRemovedProximal,r[tBRP])
+#         feasible, candidateRoutes,_ = inst.constraints(candidateRoutes, demands, Q)
+#     return candidateRoutes,toBeRemovedProximal
+
+
+# def prox_based_removal(routes, points, demands, Q):
+#     routes_trunk = [route[1:-1] for route in routes]
+#     routes_hpstack = np.hstack(routes_trunk)
+#     indexes = np.unique(routes_hpstack)
+#
+#     feasible = False
+#     while not feasible:
+#         N_points = np.random.randint(
+#             np.size(indexes, axis=0) // 2)  # eventualmente modificare questo criterio di scelta
+#         candidateRoutes = routes.copy()
+#         toBeRemoved = np.random.choice(indexes, replace=False, size=N_points)
+#         toBeRemovedProximal = toBeRemoved.copy()
+#
+#         for tBR in toBeRemoved:
+#             for i, r in enumerate(candidateRoutes):
+#                 cancel = np.where(tBR == r)[0]
+#                 if np.size(cancel) == 1:
+#                     cancel = int(cancel)
+#                     if cancel == 1:
+#                         tBRP = cancel + 1
+#                     elif cancel == np.size(r) - 1:
+#                         tBRP = cancel - 1
+#                     elif 1 < cancel < np.size(r) - 2:
+#                         tBRP = np.random.choice([cancel - 1, cancel + 1])
+#                     else:
+#                         # Rimuovi tBRP da toBeRemovedProximal se non è stato rimosso da candidateRoutes
+#                         toBeRemovedProximal = np.setdiff1d(toBeRemovedProximal, [cancel])
+#                         continue
+#
+#                     if np.size(candidateRoutes[i]) <= 3:
+#                         continue
+#
+#                     # Verifica se tBRP è già presente in toBeRemoved o toBeRemovedProximal
+#                     if tBRP not in toBeRemoved and tBRP not in toBeRemovedProximal:
+#                         # Aggiungi tBRP solo se non è presente in toBeRemoved e toBeRemovedProximal
+#                         toBeRemovedProximal = np.append(toBeRemovedProximal, tBRP)
+#
+#                     candidateRoutes[i] = np.delete(candidateRoutes[i], np.array([cancel, tBRP]))
+#
+#         feasible, candidateRoutes, _ = inst.constraints(candidateRoutes, demands, Q)
+#
+#     return candidateRoutes, toBeRemovedProximal
+
+
 def random_client_removal(routes, points, demands, Q):
-    # points = points[1:]
     routes_trunk = [route[1:-1] for route in routes]
-    routes_hpstack = np.hstack(routes_trunk)
-    indexes = np.unique(routes_hpstack)
-    feasible = False
-    while feasible == False:
-        candidateRoutes = routes.copy()
-        N_points = np.random.randint(np.size(indexes)//2)  # eventualmente modificare questo criterio di scelta
-        toBeRemoved = np.random.choice(indexes,replace=False,size=N_points)
-        final_toBeRemoved = toBeRemoved.copy()
-        for tBR in toBeRemoved:
-            canceled = False
-            for i,r in enumerate(candidateRoutes):
-                cancel = np.where(tBR == r)[0]
-                if np.size(cancel) == 1:
-                    cancel = int(cancel)
-                    candidateRoutes[i] = np.delete(candidateRoutes[i], cancel)
-                    canceled = True
-            if not canceled:
-                where = np.where(tBR == final_toBeRemoved)[0]
-                final_toBeRemoved = np.delete(final_toBeRemoved,where)
-                continue
-        feasible,candidateRoutes,_ = inst.constraints(candidateRoutes,demands,Q)
-
-    return candidateRoutes,final_toBeRemoved
-
+    monoroute = np.concatenate(routes_trunk)
+    N_points = np.random.randint(1, len(monoroute) // 2)
+    remove = np.random.choice(monoroute, size=N_points, replace=False)
+    candidateRoutes = []
+    for r in routes:
+        route = []
+        route.append(0)
+        for v in r:
+            if v not in remove:
+                route.append(v)
+        route.append(0)
+        candidateRoutes.append(np.array(route))
+    feasible,candidateRoutes,_ = inst.constraints(candidateRoutes,demands,Q)
+    if feasible:
+        return candidateRoutes, remove
+    else: return routes, []
 
 def zone_removal(routes, points, demands, Q):
-#     points = points[1:]
     routes_trunk = [route[1:-1] for route in routes]
-    routes_hpstack = np.hstack(routes_trunk)
-    indexes = np.unique(routes_hpstack)
-    feasible = False
-    while feasible == False:
-        candidateRoutes = routes.copy()
-        center = np.random.choice(indexes)
-        #continuare simulando i lati (si può scegliere una distribuzione normale con media 0 e  varianza con quella
-        # campionaria, dove i campioni nel nostro caso possono essere tutti gli altri punti della mappa
-        distancesAxes = np.abs(points - points[center])
-        stdX = np.std(distancesAxes[:,0])
-        stdY = np.std(distancesAxes[:, 1])
-        deltaX = np.abs(np.random.normal(scale=stdX))
-        deltaY = np.abs(np.random.normal(scale=stdY))
-        preBeRemoved = []
-        preBeRemoved.append(center)
-        for i,p in enumerate(points):
-            distance = np.abs(p - points[center])
-            if distance[0] < deltaX and distance[1] < deltaY:
-                preBeRemoved.append(i)
-        preBeRemoved = np.array(preBeRemoved)
-        N_points = np.random.randint(np.size(preBeRemoved))
-        toBeRemoved = np.random.choice(preBeRemoved,size=N_points,replace=False)
-        final_toBeRemoved = toBeRemoved.copy()
-        for tBR in toBeRemoved:
-            canceled = False
-            for i, r in enumerate(candidateRoutes):
-                cancel = np.where(tBR == r)[0]
-                if np.size(cancel) == 1:
-                    candidateRoutes[i] = np.delete(candidateRoutes[i], cancel)
-                    canceled = True
-            if not canceled:
-                where = np.where(tBR == final_toBeRemoved)[0]
-                final_toBeRemoved = np.delete(final_toBeRemoved, where)
-                continue
-        feasible, candidateRoutes,_ = inst.constraints(candidateRoutes, demands, Q)
-    return candidateRoutes,final_toBeRemoved
+    monoroute = np.concatenate(routes_trunk)
+    center = np.random.choice(monoroute)
 
+    # Continuare simulando i lati (si può scegliere una distribuzione normale con media 0 e
+    # varianza con quella campionaria, dove i campioni nel nostro caso possono essere tutti gli altri punti della mappa
+    distancesAxes = np.abs(points - points[center])
+    stdX = np.std(distancesAxes[:, 0])
+    stdY = np.std(distancesAxes[:, 1])
+    deltaX = np.abs(np.random.normal(scale=stdX))
+    deltaY = np.abs(np.random.normal(scale=stdY))
+
+    preBeRemoved = [center]
+    for i, p in enumerate(points):
+        distance = np.abs(p - points[center])
+        if distance[0] < deltaX and distance[1] < deltaY:
+            preBeRemoved.append(i)
+    preBeRemoved = np.array(preBeRemoved)
+    N_points = np.random.randint(1,np.size(preBeRemoved))
+    remove = np.random.choice(preBeRemoved,N_points,replace= False)
+    candidateRoutes = []
+    for r in routes:
+        route = []
+        route.append(0)
+        for v in r:
+            if v not in remove:
+                route.append(v)
+        route.append(0)
+        candidateRoutes.append(np.array(route))
+    feasible, candidateRoutes, _ = inst.constraints(candidateRoutes, demands, Q)
+    if feasible:
+        return candidateRoutes, remove
+    else:
+        return routes, []
 
 def prox_based_removal(routes, points, demands, Q):
-#     points = points[1:]
     routes_trunk = [route[1:-1] for route in routes]
-    routes_hpstack = np.hstack(routes_trunk)
-    indexes = np.unique(routes_hpstack)
-    feasible = False
-    while feasible == False:
-        N_points = np.random.randint(np.size(indexes, axis=0) // 2)  # eventualmente modificare questo criterio di scelta
-        candidateRoutes = routes.copy()
-        toBeRemoved = np.random.choice(indexes, replace=False, size=N_points)
-        toBeRemovedProximal = toBeRemoved.copy()
-        for tBR in toBeRemoved:
-            for i, r in enumerate(candidateRoutes):
-                cancel = np.where(tBR == r)[0]
-                if np.size(cancel) == 1:
-                    cancel = int(cancel)
-                    if cancel == 1:
-                        tBRP = cancel + 1
-                    elif cancel == np.size(r) - 1:
-                        tBRP = cancel - 1
-                    elif 1 < cancel < np.size(r) - 2:
-                        tBRP = np.random.choice([cancel - 1, cancel + 1])
-                    else:
-                        dove = np.where(toBeRemovedProximal == tBR)[0]
-                        toBeRemovedProximal = np.delete(toBeRemovedProximal, dove)
-                        continue
-                    if np.size(candidateRoutes[i]) <= 3:
-                        dove = np.where(toBeRemovedProximal == tBR)[0]
-                        toBeRemovedProximal = np.delete(toBeRemovedProximal,dove)
-                        continue
-                    candidateRoutes[i] = np.delete(candidateRoutes[i], np.array([cancel,tBRP]))
-                    toBeRemovedProximal = np.append(toBeRemovedProximal,r[tBRP])
-        feasible, candidateRoutes,_ = inst.constraints(candidateRoutes, demands, Q)
-    return candidateRoutes,toBeRemovedProximal
+    monoroute = np.concatenate(routes_trunk)
+    N_points = np.random.randint(1,np.size(monoroute, axis=0) // 2)  # eventualmente modificare questo criterio di scelta
+    toBeRemoved = np.random.choice(monoroute,size=N_points,replace=False)
+    remove = toBeRemoved.copy()
+    for p in toBeRemoved:
+        for r in routes_trunk:
+            for i,v in enumerate(r):
+                if p == v:
+                    if len(r) > 1:
+                        if i == len(r)-1:
+                            p2 = r[i-1]
+                        elif i == 0:
+                            p2 = r[i+1]
+                        else:
+                            p2 = r[i + np.random.choice([1,-1])]
+                        remove = np.append(remove,p2)
+    candidateRoutes = []
+    for r in routes:
+        route = []
+        route.append(0)
+        for v in r:
+            if v not in remove:
+                route.append(v)
+        route.append(0)
+        candidateRoutes.append(np.array(route))
+    feasible, candidateRoutes, _ = inst.constraints(candidateRoutes, demands, Q)
+    if feasible:
+        return candidateRoutes, remove
+    else:
+        return routes, []
 
 
 def destroy(routes, points, demands, Q): #, N):
@@ -132,11 +346,11 @@ def destroy(routes, points, demands, Q): #, N):
     # while i <= N and np.size(monoRoute) > np.size(firstMonoRoute)//2:
     movement = np.random.choice(np.arange(3))
     if movement == 0:
-        candidateRoutes, tBR = random_client_removal(candidateRoutes, points, demands, Q)
+        candidateRoutes, tBR = random_client_removal(routes, points, demands, Q)
     if movement == 1:
-        candidateRoutes, tBR = zone_removal(candidateRoutes, points, demands, Q)
+        candidateRoutes, tBR = zone_removal(routes, points, demands, Q)
     if movement == 2:
-        candidateRoutes, tBR = prox_based_removal(candidateRoutes, points, demands, Q)
+        candidateRoutes, tBR = prox_based_removal(routes, points, demands, Q)
     toBeRemoved = np.concatenate((toBeRemoved, tBR))
     routes_trunk = [route[1:-1] for route in candidateRoutes]
     monoRoute = np.hstack(routes_trunk)
@@ -146,11 +360,11 @@ def destroy(routes, points, demands, Q): #, N):
         candidateRoutes = routes.copy()
         movement = np.random.choice(np.arange(3))
         if movement == 0:
-            candidateRoutes, tBR = random_client_removal(candidateRoutes, points, demands, Q)
+            candidateRoutes, tBR = random_client_removal(routes, points, demands, Q)
         if movement == 1:
-            candidateRoutes, tBR = zone_removal(candidateRoutes, points, demands, Q)
+            candidateRoutes, tBR = zone_removal(routes, points, demands, Q)
         if movement == 2:
-            candidateRoutes, tBR = prox_based_removal(candidateRoutes, points, demands, Q)
+            candidateRoutes, tBR = prox_based_removal(routes, points, demands, Q)
         toBeRemoved = np.concatenate((toBeRemoved,tBR))
         routes_trunk = [route[1:-1] for route in candidateRoutes]
         monoRoute = np.hstack(routes_trunk)
@@ -587,7 +801,7 @@ def random_insertion(removed,routes, points, demands, Q):
             remained = np.delete(remained, where)
             i += 1
         notInserted = np.concatenate([notInserted, remained])
-        feasible,_ = inst.constraints(candidateRoutes,demands,Q)
+        feasible,_,_ = inst.constraints(candidateRoutes,demands,Q)
         trials += 1
     if not feasible:
         return routes,removed

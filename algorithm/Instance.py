@@ -51,7 +51,7 @@ class Solution(Instance):
         demands = self.demands
         Q = self.v_capacities
         routes = self.routes
-        self.feasible, _ = constraints(routes,demands,Q)
+        self.feasible,_,_ = constraints(routes,demands,Q)
         return self.feasible
 
     def standard_form_sol(self):
@@ -157,7 +157,8 @@ def constraints(routes,demands,Q):
             deleted.append(i)
 
     if len(routes) == 0:
-        return False, routes,np.array(deleted)
+        feasible = False
+        return feasible, routes,np.array(deleted)
     # Update the routes list with the filtered routes
     routes = filtered_routes
 
@@ -173,7 +174,8 @@ def constraints(routes,demands,Q):
 
     routes_trunk = [route[1:-1] for route in routes]
     if len(routes_trunk) == 0:
-        return False, routes,np.array(deleted)
+        feasible = False
+        return feasible, routes,np.array(deleted)
     if np.any(routes_trunk == 0):
         feasible = False
         return feasible,routes,np.array(deleted)
