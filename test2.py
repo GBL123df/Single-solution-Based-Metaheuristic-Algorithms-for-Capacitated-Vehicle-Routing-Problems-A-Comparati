@@ -239,7 +239,7 @@ class TestBenchmarking(unittest.TestCase):
         t1 = pfc()
         solution, routes, val, routing = solve_cvrp(data,
                                              first_solution_strategy=routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
-                                             local_search_metaheuristic=routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING,
+                                             local_search_metaheuristic=routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
                                              time_limit_seconds=10,start=False,startRoutes=[])
         print("\nroutes=\n",routes,"\n value = \n",val)
         t2 = pfc()
@@ -295,23 +295,28 @@ class TestBenchmarking(unittest.TestCase):
         file3 = percorso + "Flanders2.txt"
         file4 = percorso + "Antwerp1.txt"
         file5 = percorso + "Ghent1.txt"
+        file6 = percorso + "P-n101-k4.txt"
+        file7 = percorso + "Golden_20.txt"
 
         file = os.path.join(self.path, file)
         file2 = os.path.join(self.path, file2)
         file3 = os.path.join(self.path, file3)
         file4 = os.path.join(self.path, file4)
         file5 = os.path.join(self.path, file5)
+        file6 = os.path.join(self.path, file6)
+        file7 = os.path.join(self.path, file7)
 
-        instance = inst.create_instance_from_file(file)
+        instance = inst.create_instance_from_file(file2)
         t1 = pfc()
 
         sol = ortS.solution_ORTools(instance,first_solution_strategy=routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
                                            local_search_metaheuristic=routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING,
-                                    time_limit_seconds=1)
+                                    time_limit_seconds=3
+                                    )
         t2 = pfc()
 
         t3 = pfc()
-        solution = instance.compute_sol(T=3, hmax=5)
+        solution = instance.compute_sol(T=1, hmax=10,len_Taboo=10,temperature=10)
         t4 = pfc()
         print("\nval= \n",solution.value,"\n")
         feasible = solution.constraints()

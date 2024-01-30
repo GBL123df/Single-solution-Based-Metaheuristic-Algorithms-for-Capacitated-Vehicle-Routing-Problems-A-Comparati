@@ -55,16 +55,16 @@ def first_route(points,labels, C):
 def shake(sol,routes,points,demands,Q,mode):
     # neigh_struct = np.random.randint(0,N + 1) #in base a quanti tipi di strutture di vicinato inserisco decido N che sarà costante
     if mode == 'one':
-        neigh_struct = np.random.choice(np.array([0,1,2,3,4,5]))
+        neigh_struct = np.random.choice(np.array([0,1,2,3,4,5,6,7]))
         # neigh_struct = np.random.choice(np.array([1,3]))
         # neigh_struct = 2
-        routes,difference = hrst.neighbour(neigh_struct,routes, points, demands, Q)
+        routes,difference = hrst.neighbour_improvement(neigh_struct,routes, points, demands, Q)
         sol = sol + difference
     elif mode == 'cocktail':
         N = np.random.randint(low = 2,high = 10)
         i = 0
         while i < N:
-            neigh_struct = np.random.choice(np.array([0,1,2,3,4,5]))
+            neigh_struct = np.random.choice(np.array([0,1,2,3,4,5,6,7]))
 #             neigh_struct = np.random.choice(np.array([1,3]))
 #             neigh_struct = 2
             routes, difference = hrst.neighbour(neigh_struct, routes, points, demands, Q)
@@ -76,6 +76,38 @@ def shake(sol,routes,points,demands,Q,mode):
 
 
 #fase di miglioramento del vicinato
+# def first_improvement(sol,routes,points,demands,Q,hmax):
+#     difference = np.inf
+#     # neigh_struct = 0
+#     n_str = np.array([0,1,2,3,4,5])
+#     # n_str = np.array([0,1,2,3])
+# #     n_str = np.array([1,3])
+# #     n_str = np.array([2])
+#     i = 0
+#     # neigh_struct = n_str[i]
+#     neigh_struct = np.random.choice(n_str)
+#     taboo = []
+#     taboo.append(neigh_struct)
+#     h = 0
+#     while difference >= 0 and h < hmax:
+#         if len(n_str) == 1:
+#             new_routes, difference = hrst.neighbour(neigh_struct, routes, points, demands, Q)
+#             h += 1
+#         else:
+#             new_routes, difference = hrst.neighbour(neigh_struct,routes, points, demands, Q)
+#             neigh_struct = np.random.choice(np.setdiff1d(n_str, taboo))
+#         #the complexity is good using a random choice, on stack overflow is written that complexity is about o(1)
+#             taboo.append(neigh_struct)
+#             if np.size(np.setdiff1d(n_str, taboo)) == 0:
+#                 taboo = []
+#                 taboo.append(neigh_struct)
+#                 h += 1
+#         if difference < 0:
+#             new_sol = sol + difference
+#             return new_routes,new_sol
+#         else:
+#             return routes,sol
+
 def first_improvement(sol,routes,points,demands,Q,hmax):
     difference = np.inf
     # neigh_struct = 0
@@ -83,30 +115,25 @@ def first_improvement(sol,routes,points,demands,Q,hmax):
     # n_str = np.array([0,1,2,3])
 #     n_str = np.array([1,3])
 #     n_str = np.array([2])
-    i = 0
-    # neigh_struct = n_str[i]
-    neigh_struct = np.random.choice(n_str)
-    taboo = []
-    taboo.append(neigh_struct)
     h = 0
-    while difference >= 0 and h < hmax:
+    neigh_struct = n_str[0]
+    while h < hmax:
         if len(n_str) == 1:
-            new_routes, difference = hrst.neighbour(neigh_struct, routes, points, demands, Q)
+            new_routes, difference = hrst.neighbour_improvement(neigh_struct, routes, points, demands, Q)
             h += 1
         else:
-            new_routes, difference = hrst.neighbour(neigh_struct,routes, points, demands, Q)
-            neigh_struct = np.random.choice(np.setdiff1d(n_str, taboo))
+            new_routes, difference = hrst.neighbour_improvement(neigh_struct,routes, points, demands, Q)
+            h += 1
         #the complexity is good using a random choice, on stack overflow is written that complexity is about o(1)
-            taboo.append(neigh_struct)
-            if np.size(np.setdiff1d(n_str, taboo)) == 0:
-                taboo = []
-                taboo.append(neigh_struct)
-                h += 1
+
+        if neigh_struct == n_str[-1]:
+            neigh_struct = n_str[0]
+            h += 1
         if difference < 0:
             new_sol = sol + difference
             return new_routes,new_sol
-        else:
-            return routes,sol
+    if difference >= 0:
+        return routes,sol
 
 
 #funzione obbiettivo
@@ -134,74 +161,98 @@ def equalSol(couple1,couple2):
         else: return False
 
 
-def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,prob):
+def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,temperature):
     debug = False
     routes,sol = first_route(points,labels,C)
     taboo = []
-    taboo_counter = 0
+    # taboo_counter = 0
     t0 = pfc()
     t = t0
-    mode = 'one'
+    tp = temperature
+    k = 0
+    annealing_prob = 1
+    # mode = 'one'
     while t - t0 <= T:
-        t_1 = pfc()
-        if taboo_counter > 3:
-            p = min(1,p*1.5)
-        else:
-            p = prob
-        destFactor = np.random.choice(np.array([0,1]),p = np.array([p,1 - p]))
-        sol0 = sol.copy()
-        x0 = routes.copy()
-        if destFactor == 0:
-            # N = np.random.randint(1,3)
-            x0,sol0 = dstrp.destroyAndRepair(x0,sol0,points,demands,Q)
+        # t_1 = pfc()
+        # if taboo_counter > 3:
+        #     p = min(1,p*1.5)
+        # else:
+        #     p = prob
 
-        if debug:
-            t_2 = pfc()
-            print("\nFase 1 destRec = ", t_2-t_1,"\n" )
-            print("\n",inst.constraints(x0,demands,Q),"\n")
+        # sol0 = sol.copy()
+        # x0 = routes.copy()
 
-        if taboo_counter > 2:
-            mode = 'cocktail'
-        x1,sol1 = shake(sol0,x0,points,demands,Q,mode)
-        mode = 'one'
+
+
+        # if debug:
+        #     t_2 = pfc()
+        #     print("\nFase 1 destRec = ", t_2-t_1,"\n" )
+        #     print("\n",inst.constraints(routes,demands,Q),"\n")
+
+        # if taboo_counter > 2:
+        mode = 'cocktail'
+        x1, sol1 = shake(sol, routes, points, demands, Q, mode)
+
+        # mode = 'one'
 
         if debug:
 
             t_3 = pfc()
-            print("\nFase 2 shake = ", t_3-t_2,"\n" )
-            print("\n",inst.constraints(x1,demands,Q),"\n")
+            # print("\nFase 2 shake = ", t_3-t_2,"\n" )
+            # print("\n",inst.constraints(x1,demands,Q),"\n")
 
         x2,sol2 = first_improvement(sol1,x1,points,demands,Q,hmax)
-        if debug:
-            t_4 = pfc()
-            print("\n Fase 3 improvement = ", t_4-t_3,"\n" )
-            print("\n",inst.constraints(x2,demands,Q),"\n")
-
+        # if debug:
+        #     t_4 = pfc()
+        #     print("\n Fase 3 improvement = ", t_4-t_3,"\n" )
+        #     print("\n",inst.constraints(x2,demands,Q),"\n")
+        taboo_violated = False
         for old in taboo:
             if equalSol((x2,sol2),old):
+                routes = x1
+                sol = sol1
                 t = pfc()
-                taboo_counter += 1
-                continue
+                taboo_violated = True
+                # taboo_counter += 1
+                break
+        if taboo_violated:
+            destFactor = np.random.choice(np.array([0, 1]), p=np.array([1 - annealing_prob, annealing_prob]))
+            if destFactor == 1:
+                # N = np.random.randint(1,3)
+                routes, sol = dstrp.destroyAndRepair(routes, sol, points, demands, Q)
+            continue
         feasible,_,_ = inst.constraints(x2,demands,Q)
         if sol2 - sol < 0 and feasible == True:
             routes = x2
             sol = sol2
             taboo.append((routes,sol))
-            taboo_counter = 0
+            # taboo_counter = 0
             if len(taboo) > len_Taboo:
                 taboo.pop(0)
-        if debug:
-            t_5 = pfc()
-            print("\nFase 4 taboo controls = ", t_5-t_4,"\n" )
-            print("\n",inst.constraints(routes,demands,Q),"\n")
+        elif sol2 - sol >= 0 and feasible == True:
+            annealing_prob = np.exp((sol-sol2)/tp)
+            hill_climb = np.random.choice([0,1],p = [1-annealing_prob,annealing_prob])
+            tp = temperature*pow(0.9,k)
+            if hill_climb == 1:
+                routes = x2
+                sol = sol2
+                taboo.append((routes, sol))
+                taboo_counter = 0
+                if len(taboo) > len_Taboo:
+                    taboo.pop(0)
+        # if debug:
+        #     t_5 = pfc()
+        #     print("\nFase 4 taboo controls = ", t_5-t_4,"\n" )
+        #     print("\n",inst.constraints(routes,demands,Q),"\n")
 
         t = pfc()
+        k = np.log(t - t0)
     return routes,sol
 
 
 
-def CluVNS(points,demands, Q,T,hmax):
+def CluVNS(points,demands, Q,T,hmax,len_Taboo,temperature):
     labels,cum_qt,C = clust.DBCVRI(points,demands,Q)
-    routes,sol = VNS(points, labels, demands, Q,T,C,hmax,len_Taboo = 5,prob = 0.1)
+    routes,sol = VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,temperature)
     return routes,sol
 

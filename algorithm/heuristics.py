@@ -17,76 +17,6 @@ def dist(points):
 random = False
 
 
-# def arc_exchange(routes, points, demands, Q):
-#     start_feasible,routes,_ = inst.constraints(routes,demands,Q)
-#
-#     l_r = len(routes)
-#     arc_1 = np.zeros(2,dtype=int)
-#     arc_2 = np.zeros(2,dtype=int)
-#
-#     route_ex = np.random.randint(0, l_r, size=2)
-#     r0 = routes[route_ex[0]]
-#     r1 = routes[route_ex[1]]
-#     taken1 = []
-#     taken2 = []
-#     poss_route = np.arange(l_r)
-#     taken1.append(route_ex[0])
-#     taken2.append(route_ex[1])
-#     while (len(r0[1:-2]) == 0 or len(r1[1:-2]) == 0) and len(np.setdiff1d(poss_route, taken1)) > 0 and len(np.setdiff1d(poss_route, taken2)) > 0:
-#         route_ex[0] = np.random.choice(np.setdiff1d(poss_route,taken1))
-#         route_ex[1] = np.random.choice(np.setdiff1d(poss_route,taken2))
-#         r0 = routes[route_ex[0]]
-#         r1 = routes[route_ex[1]]
-#         taken1.append(route_ex[0])
-#         taken2.append(route_ex[1])
-#     if (len(r0[1:-2]) == 0 and len(np.setdiff1d(poss_route, taken1)) == 0) or (len(r1[1:-2]) == 0 and len(np.setdiff1d(poss_route, taken2)) == 0):
-#         return routes, 0
-#
-#     arc_1[0] = int(np.random.choice(r0[1:-2], size=1, replace=False))
-#     a10 = np.where(r0[1:-2] == arc_1[0])
-#     if np.size(a10[0]) != 1:
-#         return routes, 0
-#     a10 = int(a10[0]) + 1
-#     a11 = a10 + 1
-#     arc_1[1] = r0[a11]
-#
-#     taboo = []
-#     feasible = False
-#     while feasible == False and len(taboo) != np.size(r1[1:-2]):
-#         if np.size(np.setdiff1d(r1[1:-2], taboo)) == 0:
-#             return routes,0
-#         arc_2[0] = int(np.random.choice(np.setdiff1d(r1[1:-2], taboo), size=1, replace=False))
-#
-#         taboo.append(arc_2[0])
-#
-#         a20 = np.where(r1[1:-1] == arc_2[0])
-#         if np.size(a20[0]) != 1:
-#             continue
-#         a20 = int(a20[0]) + 1
-#         a21 = a20 + 1
-#         arc_2[1] = r1[a21]
-#
-#
-#         r0_new = r0.copy()
-#         r1_new = r1.copy()
-#
-#         r0_new[a10] = arc_2[0]
-#         r0_new[a11] = arc_2[1]
-#         r1_new[a20] = arc_1[0]
-#         r1_new[a21] = arc_1[1]
-#
-#
-#         candidate_routes = routes.copy()
-#         candidate_routes[route_ex[0]] = r0_new
-#         candidate_routes[route_ex[1]] = r1_new
-#
-#         feasible,candidate_routes,_ = inst.constraints(candidate_routes, demands, Q)
-#     if feasible == True:
-#         difference = - dist(points[r0[a10 - 1:a11 + 2]]) - dist(points[r1[a20 - 1:a21 + 2]]) + dist(points[r0_new[a10 - 1:a11 + 2]]) + dist(points[r1_new[a20 - 1:a21 + 2]])
-#
-#         return candidate_routes, difference
-#     else:
-#         return routes,0
 
 def arc_exchange(routes, points, demands, Q):
     start_feasible, routes, _ = inst.constraints(routes, demands, Q)
@@ -156,6 +86,104 @@ def arc_exchange(routes, points, demands, Q):
         return candidate_routes, difference
     else:
         return routes, 0
+
+def arc_exchange_improvement(routes, points, demands, Q):
+    start_feasible, routes, _ = inst.constraints(routes, demands, Q)
+
+    l_r = len(routes)
+    arc_1 = np.zeros(2, dtype=int)
+    arc_2 = np.zeros(2, dtype=int)
+
+    route_ex = np.random.choice(np.arange(0, l_r), size=2, replace=False)
+
+    r0 = routes[route_ex[0]].copy()
+    r1 = routes[route_ex[1]].copy()
+    taken1 = [route_ex[0]]
+    taken2 = [route_ex[1]]
+
+    while (len(r0[1:-2]) == 0 or len(r1[1:-2]) == 0) and len(taken1) < l_r and len(taken2) < l_r:
+        route_ex[0] = np.random.choice(np.setdiff1d(np.arange(l_r), taken1))
+        route_ex[1] = np.random.choice(np.setdiff1d(np.arange(l_r), taken2))
+        r0 = routes[route_ex[0]].copy()
+        r1 = routes[route_ex[1]].copy()
+        taken1.append(route_ex[0])
+        taken2.append(route_ex[1])
+
+    if len(r0[1:-2]) == 0 or len(r1[1:-2]) == 0:
+        return routes, 0
+
+    diff0 = dist(points[r0]) + dist(points[r1])
+
+    # Seleziona casualmente due archi da scambiare
+    arc_1[0] = int(np.random.choice(r0[1:-2], size=1, replace=False))
+    a10 = np.where(r0 == arc_1[0])[0][0] + 1
+    a11 = a10 + 1
+    arc_1[1] = r0[a11]
+
+    feasible = False
+    candidate_routes = routes.copy()
+
+    # Itera su tutte le possibili combinazioni di archi
+    for arc_2[0] in r1[1:-2]:
+        a20 = np.where(r1 == arc_2[0])[0][0] + 1
+        a21 = a20 + 1
+        arc_2[1] = r1[a21]
+
+        # Effettua lo scambio e verifica la fattibilità
+        r0_new = r0.copy()
+        r1_new = r1.copy()
+        r0_new[a10] = arc_2[0]
+        r0_new[a11] = arc_2[1]
+        r1_new[a20] = arc_1[0]
+        r1_new[a21] = arc_1[1]
+
+        candidate_routes[route_ex[0]] = r0_new
+        candidate_routes[route_ex[1]] = r1_new
+
+        feasible, candidate_routes, _ = inst.constraints(candidate_routes, demands, Q)
+
+        # Se la soluzione è fattibile, calcola la differenza e restituisci il risultato
+        if feasible:
+            difference = dist(points[r0_new]) + dist(points[r1_new]) - diff0
+            return candidate_routes, difference
+
+    # Se nessuna combinazione porta a una soluzione fattibile, restituisci le route originali
+    return routes, 0
+
+# def arc_exchange(routes, points, demands, Q,mode):
+#     routes_trunk = [route[1:-1] for route in routes]
+#     monoroute = np.concatenate(routes_trunk)
+#     l_r = len(routes)
+#     route_ex = np.random.randint(0, l_r, size=2)
+#     r0_full = routes[route_ex[0]]
+#     r1_full = routes[route_ex[1]]
+#     r0_full_new = r0_full.copy()
+#     r1_full_new = r1_full.copy()
+#     r0 = routes_trunk[route_ex[0]]
+#     r1 = routes_trunk[route_ex[1]]
+#     r0_new = r0.copy()
+#     r1_new = r1.copy()
+#     if len(r0) == 3:
+#         arc_1 = r0
+#     else:
+#         arc_1 = np.zeros(2,dtype=int)
+#         arc_1[0] = np.random.choice(r0)
+#         if arc_1[0] == r0[-1]:
+#             arc_1 = arc_1[0]
+#         else:
+#             arc_1[1] = r0[np.where(arc_1[0] == r0)[0]]
+#     feasible = False
+#     while not feasible:
+#         if len(r1) == 3:
+#             arc_2 = r1
+#         else:
+#             arc_2 = np.zeros(2,dtype=int)
+#             arc_2[0] = np.random.choice(r1)
+#             if arc_2[0] == r1[-1]:
+#                 arc_2 = arc_2[0]
+#             else:
+#                 arc_2[1] = r1[np.where(arc_2[0] == r1)[0]]
+#         r0_new[arc_1 == ]
 
 
 # def swap_inter_route(routes, points, demands, Q):
@@ -252,6 +280,64 @@ def swap_inter_route(routes, points, demands, Q):
     if feasible:
         difference = dist(points[r0]) + dist(points[r1]) - diff0
         return candidate_routes, difference
+    else:
+        return routes, 0
+
+def swap_inter_route_improvement(routes, points, demands, Q):
+    # Verifica delle route iniziali
+    start_feasible, routes, _ = inst.constraints(routes, demands, Q)
+    l_r = len(routes)
+
+    # Seleziona casualmente due percorsi
+    route_ex = np.random.randint(0, l_r, size=2)
+    r0 = routes[route_ex[0]].copy()
+    r1 = routes[route_ex[1]].copy()
+    diff0 = dist(points[r0]) + dist(points[r1])
+
+    # Inizializza le variabili per tenere traccia della migliore soluzione
+    best_r0 = r0.copy()
+    best_r1 = r1.copy()
+    best_f = 0
+
+    # Itera su tutti i possibili nodi da scambiare tra le due route
+    for node1 in r0[1:-1]:
+        for node2 in r1[1:-1]:
+            # Trova gli indici dei nodi da scambiare
+            old0 = int(np.where(r0 == node1)[0])
+            old1 = int(np.where(r1 == node2)[0])
+
+            # Scambia i nodi nei percorsi
+            r0[old0] = node2
+            r1[old1] = node1
+
+            # Crea una copia delle route
+            candidate_routes = routes.copy()
+            candidate_routes[route_ex[0]] = r0
+            candidate_routes[route_ex[1]] = r1
+
+            # Verifica la fattibilità delle nuove route
+            feasible, candidate_routes, _ = inst.constraints(candidate_routes, demands, Q)
+
+            # Calcola la differenza di lunghezza tra le route
+            if feasible:
+                difference = dist(points[r0]) + dist(points[r1]) - diff0
+
+                # Aggiorna la migliore soluzione se necessario
+                if difference - best_f < 0:
+                    best_r0 = r0.copy()
+                    best_r1 = r1.copy()
+                    best_f = difference
+
+            # Ripristina le route originali
+            r0[old0] = node1
+            r1[old1] = node2
+
+    # Assegna le migliori route trovate
+    candidate_routes[route_ex[0]] = best_r0
+    candidate_routes[route_ex[1]] = best_r1
+
+    if feasible:
+        return candidate_routes, best_f
     else:
         return routes, 0
 
@@ -378,6 +464,112 @@ def move_node(routes, points, demands, Q):
     else:
         return routes, 0
 
+def move_node_improvement(routes, points, demands, Q):
+    # Verifica delle route iniziali
+    start_feasible, routes, _ = inst.constraints(routes, demands, Q)
+    l_r = len(routes)
+
+    # Seleziona casualmente due percorsi
+    route_ex = np.random.randint(0, l_r, size=2)
+    r0 = routes[route_ex[0]]
+    r1 = routes[route_ex[1]]
+    diff0 = dist(points[r0]) + dist(points[r1])
+
+    # Seleziona casualmente un nodo dalla prima route
+    if np.size(r0[1:-1]) > 1:
+        node1 = np.random.choice(r0[1:-1])
+    elif np.size(r0[1:-1]) == 1:
+        node1 = r0[1]
+    else:
+        return routes, 0
+
+    # Crea una copia delle route
+    r0_new = r0.copy()
+    r1_new = r1.copy()
+    candidate_routes = routes.copy()
+
+    # Inizializza le variabili per tenere traccia della migliore soluzione
+    r0_start = r0_new
+    r1_start = r1_new
+    best0 = r0
+    best1 = r1
+    best_f = 0
+
+    # Itera su tutte le possibili posizioni di inserimento del nodo nella seconda route
+    for j in range(1, np.size(r1_new) + 1):
+        r1_new = np.insert(r1_new, obj=j, values=node1)  # Utilizza la copia modificata r1_new
+        candidate_routes[route_ex[1]] = r1_new
+
+        feasible, candidate_routes, _ = inst.constraints(candidate_routes, demands, Q)
+        if not feasible:
+            continue
+
+        # Calcola la differenza di lunghezza tra le route
+        difference = dist(points[r0_new]) + dist(points[r1_new]) - diff0
+
+        # Aggiorna la migliore soluzione se necessario
+        if difference - best_f < 0:
+            best0 = r0_new.copy()
+            best1 = r1_new.copy()
+            best_f = difference
+
+        # Ripristina la route originale r1 nella copia delle route candidate
+        candidate_routes[route_ex[1]] = r1_start
+
+    # Assegna le migliori route trovate
+    candidate_routes[route_ex[0]] = best0
+    candidate_routes[route_ex[1]] = best1
+
+    if feasible:
+        return candidate_routes, best_f
+    else:
+        return routes, 0
+
+def relocate(routes,points,demands,Q):
+    best_diff = 0
+    route_ind = np.random.randint(0,len(routes))
+    route = routes[route_ind]
+    while len(route) <= 3:
+        route_ind = np.random.randint(0, len(routes))
+        route = routes[route_ind]
+    new_route = route.copy()
+    node = np.random.choice[route[1:-1]]
+    j = np.where(new_route == node)[0]
+    for i,n in enumerate(route):
+        if n != node:
+            new_route[j] = n
+            new_route[i] = node
+            difference = dist(points[new_route]) - dist(points[route])
+        if difference < best_diff:
+            best_diff = difference
+            best_route = new_route
+    feasible,best_route,_ = inst.constraints(routes,demands,Q)
+    return best_route,best_diff
+
+def relocate_more(routes,points,demands,Q):
+    best_diff = 0
+    route_ind = np.random.randint(0,len(routes))
+    route = routes[route_ind]
+    while len(route) <= 3:
+        route_ind = np.random.randint(0, len(routes))
+        route = routes[route_ind]
+    N = np.random.randint(2, len(route))
+    n=0
+    while n < N:
+        new_route = route.copy()
+        node = np.random.choice[route[1:-1]]
+        j = np.where(new_route == node)[0]
+        for i,n in enumerate(route):
+            if n != node:
+                new_route[j] = n
+                new_route[i] = node
+                difference = dist(points[new_route]) - dist(points[route])
+            if difference < best_diff:
+                best_diff = difference
+                best_route = new_route
+        n += 1
+    feasible,best_route,_ = inst.constraints(routes,demands,Q)
+    return best_route,best_diff
 
 
 # def swap_intra_route(routes, points, demands, Q):
@@ -484,6 +676,61 @@ def swap_intra_route(routes, points, demands, Q):
     # Restituisci le route originali se non è stata trovata una soluzione migliore
     return routes, 0
 
+def swap_intra_route_improvement(routes, points, demands, Q):
+    # Verifica delle route iniziali
+    start_feasible, routes, _ = inst.constraints(routes, demands, Q)
+
+    l_r = len(routes)
+
+    # Seleziona casualmente una route
+    route_ex = int(np.random.randint(0, l_r, size=1))
+    r0 = routes[route_ex]
+    diff0 = dist(points[r0])
+    feasible = False
+    best_candidate_routes = routes.copy()
+    best_difference = 0
+
+    # Itera su tutte le possibili coppie di nodi da scambiare nella route
+    for i in range(1, np.size(r0) - 2):
+        node1 = r0[i]
+
+        for j in range(i + 1, np.size(r0) - 1):
+            node2 = r0[j]
+
+            r0_new = r0.copy()
+
+            # Trova gli indici dei nodi da scambiare
+            old0 = int(np.where(r0 == node1)[0][0])
+            old1 = int(np.where(r0 == node2)[0][0])
+
+            # Elimina i nodi originali e inserisci i nuovi nodi
+            r0_new = np.delete(r0_new, [old0, old1])
+            r0_new = np.insert(r0_new, old0, node2)
+            r0_new = np.insert(r0_new, old1, node1)
+
+            # Crea una copia delle route
+            candidate_routes = routes.copy()
+
+            # Assegna la nuova route
+            candidate_routes[route_ex] = r0_new
+
+            # Verifica la fattibilità della nuova soluzione
+            feasible, candidate_routes, _ = inst.constraints(candidate_routes, demands, Q)
+
+            # Calcola la differenza di lunghezza tra le route
+            difference = dist(points[r0_new]) - diff0
+
+            # Aggiorna la soluzione migliore se è fattibile e migliore della precedente
+            if feasible and difference < best_difference:
+                best_candidate_routes = candidate_routes.copy()
+                best_difference = difference
+
+    # Restituisci la migliore soluzione trovata
+    if feasible:
+        return best_candidate_routes, best_difference
+    else:
+        return routes, 0
+
 
 
 # def two_opt_exchange_outer(routes, points, demands, Q):
@@ -577,13 +824,13 @@ def two_opt_exchange_outer(routes, points, demands, Q):
     route_ex = np.random.randint(0, l_r, size=2)
     r0 = routes[route_ex[0]]
     r1 = routes[route_ex[1]]
-    diff0 = dist(points[r0]) + dist(points[r1])
 
     while route_ex[0] == route_ex[1] or np.size(r0[1:-2]) < 1 or np.size(r1[1:-2]) < 1:
         route_ex = np.random.randint(0, l_r, size=2)
         r0 = routes[route_ex[0]]
         r1 = routes[route_ex[1]]
 
+    diff0 = dist(points[r0]) + dist(points[r1])
     arc_1[0] = int(np.random.choice(r0[1:-2], size=1, replace=False))
     taboo = {arc_1[0]}
     while len(np.where(r0[1:-2] == arc_1[0])[0]) != 1 and len(np.setdiff1d(r0[1:-2], list(taboo))) > 0:
@@ -634,6 +881,67 @@ def two_opt_exchange_outer(routes, points, demands, Q):
         return candidate_routes, difference
     else:
         return routes, 0
+
+
+def two_opt_exchange_outer_improvement(routes, points, demands, Q):
+    start_feasible, routes, _ = inst.constraints(routes, demands, Q)
+
+    l_r = len(routes)
+    arc_1 = np.zeros(2, dtype=int)
+    arc_2 = np.zeros(2, dtype=int)
+
+    route_trunk_is = [np.size(route[1:-2]) < 1 for route in routes]
+
+    if np.all(route_trunk_is):
+        return routes, 0
+
+    route_ex = np.random.randint(0, l_r, size=2)
+    r0 = routes[route_ex[0]]
+    r1 = routes[route_ex[1]]
+
+    while route_ex[0] == route_ex[1] or np.size(r0[1:-2]) < 1 or np.size(r1[1:-2]) < 1:
+        route_ex = np.random.randint(0, l_r, size=2)
+        r0 = routes[route_ex[0]]
+        r1 = routes[route_ex[1]]
+
+    diff0 = dist(points[r0]) + dist(points[r1])
+
+    # Itera su tutte le possibili coppie di archi da tagliare e invertire
+    for a10 in range(1, np.size(r0) - 3):
+        arc_1[0] = r0[a10]
+        a11 = a10 + 1
+        arc_1[1] = r0[a11]
+
+        for a20 in range(1, np.size(r1) - 3):
+            arc_2[0] = r1[a20]
+            a21 = a20 + 1
+            arc_2[1] = r1[a21]
+
+            # Effettua lo scambio
+            spezz00 = r0[:a11]
+            spezz01 = r0[a11:]
+            spezz10 = r1[:a21]
+            spezz11 = r1[a21:]
+
+            r0_new = np.concatenate([spezz00, spezz11], dtype=int)
+            r1_new = np.concatenate([spezz10, spezz01], dtype=int)
+
+            # Crea una copia delle route
+            candidate_routes = routes.copy()
+            candidate_routes[route_ex[0]] = r0_new
+            candidate_routes[route_ex[1]] = r1_new
+
+            # Verifica la fattibilità della nuova soluzione
+            feasible, candidate_routes, _ = inst.constraints(candidate_routes, demands, Q)
+
+            if feasible:
+                difference = dist(points[r0_new]) + dist(points[r1_new]) - diff0
+
+                return candidate_routes, difference
+
+    # Restituisci le route originali se non è stata trovata una soluzione migliore
+    return routes, 0
+
 
 # def two_opt_exchange_inner(routes, points, demands, Q):
 #     start_feasible,routes,_ = inst.constraints(routes,demands,Q)
@@ -766,7 +1074,138 @@ def two_opt_exchange_inner(routes, points, demands, Q):
     else:
         return routes, 0
 
+def two_opt_exchange_inner_improvement(routes, points, demands, Q):
+    start_feasible, routes, _ = inst.constraints(routes, demands, Q)
 
+    l_r = len(routes)
+    arc_1 = np.zeros(2, dtype=int)
+    arc_2 = np.zeros(2, dtype=int)
+
+    route_ex = np.random.choice(np.where(np.array([len(route[1:-2]) for route in routes]) > 0)[0], size=1)
+    r0 = routes[route_ex[0]]
+    diff0 = dist(points[r0])
+
+    # Itera su tutte le possibili combinazioni di archi da tagliare e invertire internamente alla route
+    for a10 in range(1, np.size(r0) - 3):
+        arc_1[0] = r0[a10]
+        a11 = a10 + 1
+        arc_1[1] = r0[a11]
+
+        taboo = set([arc_1[0]])
+
+        while np.size(np.where(r0[1:-2] == arc_1[0])) != 1 and np.size(np.setdiff1d(r0[1:-2], list(taboo))) > 0:
+            arc_1[0] = np.random.choice(np.setdiff1d(r0[1:-2], list(taboo)), size=1, replace=False)
+            taboo.add(arc_1[0])
+
+        if np.size(np.where(r0[1:-2] == arc_1[0])) != 1:
+            continue
+
+        a10 = int(np.where(r0[1:-2] == arc_1[0])[0]) + 1
+        a11 = a10 + 1
+        arc_1[1] = r0[a11]
+
+        taboo = set(arc_1)
+        feasible = False
+
+        while not feasible and len(taboo) < np.size(r0[1:-2]):
+            arc_2[0] = int(np.random.choice(np.setdiff1d(r0[1:-2], list(taboo)), size=1, replace=False))
+            taboo.add(arc_2[0])
+
+            if np.size(np.where(r0[1:-1] == arc_2[0])) != 1:
+                continue
+
+            a20 = int(np.where(r0[1:-1] == arc_2[0])[0]) + 1
+            a21 = a20 + 1
+            arc_2[1] = r0[a21]
+
+            if a10 < a20:
+                spezz00 = r0[:a11]
+                spezz01 = np.flip(r0[a11:a21])
+                spezz11 = r0[a21:]
+            else:
+                spezz00 = r0[:a21]
+                spezz01 = np.flip(r0[a21:a11])
+                spezz11 = r0[a11:]
+
+            r0_new = np.concatenate((spezz00, spezz01, spezz11), dtype=int)
+
+            if np.array_equal(r0_new, r0):
+                continue
+
+            candidate_routes = routes.copy()
+            candidate_routes[route_ex[0]] = r0_new
+
+            feasible, _, _ = inst.constraints(candidate_routes, demands, Q)
+
+        if feasible:
+            difference = -diff0 + dist(points[r0_new])
+            return candidate_routes, difference
+
+    # Restituisci le route originali se non è stata trovata una soluzione migliore
+    return routes, 0
+
+def add_new_route_points(routes, points, demands, Q):
+    new_route = [0]
+    sum = 0
+    candidate_routes = routes.copy()
+    routes_trunk = [route[1:-1] for route in routes]
+    monoroute = np.concatenate(routes_trunk)
+    N_points = np.random.randint(1,len(monoroute))
+    counter = 0
+    while sum <= Q and counter<=N_points:
+        i = np.random.randint(0,len(routes))
+        route = candidate_routes[i]
+        if len(route[1:-1]) == 0:
+            continue
+        j = np.random.choice(route[1:-1])
+        new_route.append(j)
+        route = np.delete(route,np.where(route == j)[0])
+        sum += demands[j]
+        candidate_routes[i] = route
+        counter += 1
+    new_route.append(0)
+    candidate_routes.append(new_route)
+    feasible,candidate_routes,_ = inst.constraints(routes, demands, Q)
+    difference = inst.total_euclidean_distance(candidate_routes,points) - inst.total_euclidean_distance(routes,points)
+    return candidate_routes,difference
+
+def add_new_route_edge(routes, points, demands, Q):
+    new_route = [0]
+    sum = 0
+    candidate_routes = routes.copy()
+    routes_trunk = [route[1:-1] for route in routes]
+    monoroute = np.concatenate(routes_trunk)
+    N_points = np.random.randint(1, len(monoroute))
+    counter = 0
+    while sum <= Q and counter <= N_points:
+        i = np.random.randint(0,len(routes))
+        route = candidate_routes[i]
+        if len(route[1:-1]) == 0:
+            continue
+        j = np.random.choice(route[1:-1])
+        index = np.where(route == j)[0]
+        if len(route[1:-1]) == 1:
+            new_route.append(j)
+            route = np.delete(route, index)
+            sum += demands[j]
+        else:
+            if index < len(route):
+                new_route.append(j)
+                new_route.append(route[index+1])
+                sum += demands[j] + demands[route[index+1]]
+                route = np.delete(route, index)
+                route = np.delete(route, index)
+            else :
+                new_route.append(j)
+                route = np.delete(route, index)
+
+        candidate_routes[i] = route
+        counter += 1
+    new_route.append(0)
+    candidate_routes.append(new_route)
+    feasible,candidate_routes,_ = inst.constraints(routes, demands, Q)
+    difference = inst.total_euclidean_distance(candidate_routes,points) - inst.total_euclidean_distance(routes,points)
+    return candidate_routes,difference
 def neighbour(case,routes, points, demands, Q): #mode può assumere i valori 'feasible' oppure 'exploration'
 
     # debug = 'activated'
@@ -800,8 +1239,75 @@ def neighbour(case,routes, points, demands, Q): #mode può assumere i valori 'fe
             new_routes, difference = two_opt_exchange_inner(routes, points, demands, Q) #lento
             if difference >= 0 and debug == 'activated':
                 print("\n 5 no improvement \n")
+        elif case == 6:
+            new_routes, difference = add_new_route_points(routes, points, demands, Q)
+            if difference >= 0 and debug == 'activated':
+                print("\n 6 no improvement \n")
+        elif case == 7:
+            new_routes, difference = add_new_route_edge(routes, points, demands, Q)
+            if difference >= 0 and debug == 'activated':
+                print("\n 7 no improvement \n")
+        elif case == 8:
+            new_routes, difference = relocate(routes, points, demands, Q)
+            if difference >= 0 and debug == 'activated':
+                print("\n 8 no improvement \n")
+        elif case == 9:
+            new_routes, difference = relocate_more(routes, points, demands, Q)
+            if difference >= 0 and debug == 'activated':
+                print("\n 8 no improvement \n")
         t2 = pfc()
-        print("\n execution time case ", case ,":\n",t2-t1)
+        if debug == 'activated':
+            print("\n execution time case ", case ,":\n",t2-t1)
+        feasible,_,_ = inst.constraints(new_routes,demands,Q)
+        same_len = np.size(np.unique(np.hstack([route[1:-1] for route in routes]))) == np.size(np.unique(np.hstack([route[1:-1] for route in new_routes])))
+
+    return new_routes, difference
+
+
+def neighbour_improvement(case,routes, points, demands, Q): #mode può assumere i valori 'feasible' oppure 'exploration'
+
+    # debug = 'activated'
+    debug = ''
+
+    feasible = False
+    same_len = False
+    while not feasible or not same_len:
+        t1 = pfc()
+        if case == 3:
+            new_routes, difference = arc_exchange_improvement(routes, points, demands, Q) #lento
+            if difference >= 0 and debug == 'activated':
+                print("\n 0 no improvement \n")
+        elif case == 4:
+            new_routes, difference = swap_inter_route_improvement(routes, points, demands, Q) #problemi nel papparsi pezzi di routes
+            if difference >= 0 and debug == 'activated':
+                print("\n 1 no improvement \n")
+        elif case == 0:
+            new_routes, difference = move_node_improvement(routes, points, demands, Q) #problemi nel calcolo della differenza tra i due valori, possibile risolverli calcolandola direttamente
+            if difference >= 0 and debug == 'activated':
+                print("\n 2 no improvement \n")
+        elif case == 1:
+            new_routes, difference = swap_intra_route_improvement(routes, points, demands, Q) #problemi nel papparsi pezzi di routes
+            if difference >= 0 and debug == 'activated':
+                print("\n 3 no improvement \n")
+        elif case == 7:
+            new_routes, difference = two_opt_exchange_outer_improvement(routes, points, demands, Q) #lento
+            if difference >= 0 and debug == 'activated':
+                print("\n 4 no improvement \n")
+        elif case == 6:
+            new_routes, difference = two_opt_exchange_inner_improvement(routes, points, demands, Q) #lento
+            if difference >= 0 and debug == 'activated':
+                print("\n 5 no improvement \n")
+        elif case == 2:
+            new_routes, difference = relocate(routes, points, demands, Q)
+            if difference >= 0 and debug == 'activated':
+                print("\n 8 no improvement \n")
+        elif case == 5:
+            new_routes, difference = relocate_more(routes, points, demands, Q)
+            if difference >= 0 and debug == 'activated':
+                print("\n 8 no improvement \n")
+        t2 = pfc()
+        if debug == 'activated':
+            print("\n execution time case ", case ,":\n",t2-t1)
         feasible,_,_ = inst.constraints(new_routes,demands,Q)
         same_len = np.size(np.unique(np.hstack([route[1:-1] for route in routes]))) == np.size(np.unique(np.hstack([route[1:-1] for route in new_routes])))
 

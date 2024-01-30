@@ -249,7 +249,7 @@ from algorithm import heuristics as hrst
 def random_client_removal(routes, points, demands, Q):
     routes_trunk = [route[1:-1] for route in routes]
     monoroute = np.concatenate(routes_trunk)
-    N_points = np.random.randint(1, len(monoroute) // 2)
+    N_points = np.random.randint(1, len(monoroute))
     remove = np.random.choice(monoroute, size=N_points, replace=False)
     candidateRoutes = []
     for r in routes:
@@ -304,7 +304,7 @@ def zone_removal(routes, points, demands, Q):
 def prox_based_removal(routes, points, demands, Q):
     routes_trunk = [route[1:-1] for route in routes]
     monoroute = np.concatenate(routes_trunk)
-    N_points = np.random.randint(1,np.size(monoroute, axis=0) // 2)  # eventualmente modificare questo criterio di scelta
+    N_points = np.random.randint(1,np.size(monoroute, axis=0))  # eventualmente modificare questo criterio di scelta
     toBeRemoved = np.random.choice(monoroute,size=N_points,replace=False)
     remove = toBeRemoved.copy()
     for p in toBeRemoved:
@@ -334,6 +334,14 @@ def prox_based_removal(routes, points, demands, Q):
     else:
         return routes, []
 
+def random_route_removal(routes, points, demands, Q):
+    route_ind = np.random.randint(0,len(routes))
+    remove = routes[route_ind]
+    candidate_routes = []
+    for i,r in enumerate(routes):
+        if i != route_ind:
+            candidate_routes.append(r)
+    return candidate_routes, remove
 
 def destroy(routes, points, demands, Q): #, N):
     # i = 1
@@ -344,13 +352,15 @@ def destroy(routes, points, demands, Q): #, N):
     # monoRoute = np.hstack(routes_trunk)
     # firstMonoRoute = monoRoute.copy()
     # while i <= N and np.size(monoRoute) > np.size(firstMonoRoute)//2:
-    movement = np.random.choice(np.arange(3))
+    movement = np.random.choice(np.arange(4))
     if movement == 0:
         candidateRoutes, tBR = random_client_removal(routes, points, demands, Q)
     if movement == 1:
         candidateRoutes, tBR = zone_removal(routes, points, demands, Q)
     if movement == 2:
         candidateRoutes, tBR = prox_based_removal(routes, points, demands, Q)
+    if movement == 3:
+        candidateRoutes, tBR = random_route_removal(routes,points,demands,Q)
     toBeRemoved = np.concatenate((toBeRemoved, tBR))
     routes_trunk = [route[1:-1] for route in candidateRoutes]
     monoRoute = np.hstack(routes_trunk)
@@ -826,11 +836,11 @@ def repair(removed,routes, points, demands, Q,routestart):
         monoRoute = np.hstack(routes_trunk)
         if feasible and np.size(np.concatenate([monoRoute, remotion])) != total - 1:
             routesMod = routesNew.copy()
-    if not feasible:
-        return routes
-    else:
-        return routesMod
-
+    # if not feasible:
+    #     return routes
+    # else:
+    #     return routesMod
+    return routesMod
 
 def destroyAndRepair(routes,sol, points, demands, Q): #, N):
     new_routes, removed = destroy(routes, points, demands, Q) #, N)
