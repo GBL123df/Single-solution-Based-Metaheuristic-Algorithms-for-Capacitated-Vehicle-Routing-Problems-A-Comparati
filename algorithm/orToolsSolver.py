@@ -264,7 +264,7 @@ def solve_cvrp(data, first_solution_strategy, local_search_metaheuristic, time_l
         routing.CloseModelWithParameters(search_parameters)
 
         # Get initial solution from routes after closing the model.
-        routes_trunk = [route[1:-1].tolist() for route in startRoutes]
+        routes_trunk = [route[1:-1] for route in startRoutes]
 
         initial_solution = routing.ReadAssignmentFromRoutes(routes_trunk, True)
 

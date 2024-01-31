@@ -824,7 +824,7 @@ def repair(removed,routes, points, demands, Q,routestart):
     feasible = True
     routesMod = routes.copy()
     while np.size(remotion) > 0 and feasible == True:
-        movement = np.random.choice(np.arange(3))
+        movement = np.random.choice(np.arange(1,3))
         if movement == 0:#ricontrollare elementi loop
             routesNew, remotion = greedy_insertion(remotion,routesMod, points, demands, Q)
         if movement == 1:#ricontrollare inserimenti e rimozioni

@@ -55,7 +55,7 @@ def first_route(points,labels, C):
 def shake(sol,routes,points,demands,Q,mode):
     # neigh_struct = np.random.randint(0,N + 1) #in base a quanti tipi di strutture di vicinato inserisco decido N che sarà costante
     if mode == 'one':
-        neigh_struct = np.random.choice(np.array([0,1,2,3,4,5,6,7]))
+        neigh_struct = np.random.choice(np.array([0,1,2,3,4,5,6,7,8,9,10]))
         # neigh_struct = np.random.choice(np.array([1,3]))
         # neigh_struct = 2
         routes,difference = hrst.neighbour_improvement(neigh_struct,routes, points, demands, Q)
@@ -64,7 +64,7 @@ def shake(sol,routes,points,demands,Q,mode):
         N = np.random.randint(low = 2,high = 10)
         i = 0
         while i < N:
-            neigh_struct = np.random.choice(np.array([0,1,2,3,4,5,6,7]))
+            neigh_struct = np.random.choice(np.array([0,1,2,3,4,5,6,7,8,9,10]))
 #             neigh_struct = np.random.choice(np.array([1,3]))
 #             neigh_struct = 2
             routes, difference = hrst.neighbour(neigh_struct, routes, points, demands, Q)
@@ -111,24 +111,30 @@ def shake(sol,routes,points,demands,Q,mode):
 def first_improvement(sol,routes,points,demands,Q,hmax):
     difference = np.inf
     # neigh_struct = 0
-    n_str = np.array([0,1,2,3,4,5])
+    n_str = np.array([1,0,2,3,4,5,6,7,8])
     # n_str = np.array([0,1,2,3])
 #     n_str = np.array([1,3])
 #     n_str = np.array([2])
     h = 0
-    neigh_struct = n_str[0]
+    j = 0
+    neigh_struct = n_str[j]
     while h < hmax:
         if len(n_str) == 1:
             new_routes, difference = hrst.neighbour_improvement(neigh_struct, routes, points, demands, Q)
             h += 1
         else:
             new_routes, difference = hrst.neighbour_improvement(neigh_struct,routes, points, demands, Q)
-            h += 1
-        #the complexity is good using a random choice, on stack overflow is written that complexity is about o(1)
+            if neigh_struct == n_str[-1]:
+                j = 0
+                neigh_struct = n_str[j]
+                h += 1
+                continue
+            else:
+                j += 1
+                neigh_struct = n_str[j]
 
-        if neigh_struct == n_str[-1]:
-            neigh_struct = n_str[0]
-            h += 1
+
+
         if difference < 0:
             new_sol = sol + difference
             return new_routes,new_sol
@@ -162,17 +168,19 @@ def equalSol(couple1,couple2):
 
 
 def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,temperature):
-    debug = False
+    # debug = False
     routes,sol = first_route(points,labels,C)
     taboo = []
     # taboo_counter = 0
-    t0 = pfc()
-    t = t0
+    # t0 = pfc()
+    # t = t0
+    t = 0
     tp = temperature
     k = 0
     annealing_prob = 1
     # mode = 'one'
-    while t - t0 <= T:
+    # while t - t0 <= T:
+    while t < T:
         # t_1 = pfc()
         # if taboo_counter > 3:
         #     p = min(1,p*1.5)
@@ -195,9 +203,9 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,temperature):
 
         # mode = 'one'
 
-        if debug:
+        # if debug:
 
-            t_3 = pfc()
+            # t_3 = pfc()
             # print("\nFase 2 shake = ", t_3-t_2,"\n" )
             # print("\n",inst.constraints(x1,demands,Q),"\n")
 
@@ -236,8 +244,9 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,temperature):
             if hill_climb == 1:
                 routes = x2
                 sol = sol2
-                taboo.append((routes, sol))
-                taboo_counter = 0
+                add_to_taboo = np.random.choice([0,1],p = [1-annealing_prob,annealing_prob])
+                if add_to_taboo == 1:
+                    taboo.append((routes, sol))
                 if len(taboo) > len_Taboo:
                     taboo.pop(0)
         # if debug:
@@ -245,9 +254,17 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,temperature):
         #     print("\nFase 4 taboo controls = ", t_5-t_4,"\n" )
         #     print("\n",inst.constraints(routes,demands,Q),"\n")
 
-        t = pfc()
-        k = np.log(t - t0)
-    return routes,sol
+        # t = pfc()
+        t +=1
+        # k = np.log(t - t0)
+        k = np.log(t)
+
+    if taboo:
+        vals = [tab[1] for tab in taboo]
+        best = np.argmin(vals)
+        return taboo[best][0],taboo[best][1]
+    else:
+        return routes,sol
 
 
 

@@ -264,7 +264,7 @@ class TestBenchmarking(unittest.TestCase):
         file4 = os.path.join(self.path, file4)
         file5 = os.path.join(self.path, file5)
 
-        instance = inst.create_instance_from_file(file5)
+        instance = inst.create_instance_from_file(file)
         data = create_data_model(instance)
         label, cum_qt, C =clu.DBCVRI(instance.maps,instance.demands,instance.v_capacities)
         startRoutes,sol_start = cvns.first_route(instance.maps,label,C)
@@ -281,7 +281,7 @@ class TestBenchmarking(unittest.TestCase):
         print("\n", solvingTime, "\n")
 
         X = inst.standard_form_sol(routes,instance.maps)
-        rtcfr,_ = inst.constraints(routes,instance.demands,instance.v_capacities)
+        rtcfr,_,_ = inst.constraints(routes,instance.demands,instance.v_capacities)
         solcfr = inst.constraint_standard(X,instance.demands,instance.v_capacities)
         self.assertEqual(rtcfr,solcfr)
         # self.assertGreaterEqual(tol, val - best_val_instance)
@@ -306,17 +306,17 @@ class TestBenchmarking(unittest.TestCase):
         file6 = os.path.join(self.path, file6)
         file7 = os.path.join(self.path, file7)
 
-        instance = inst.create_instance_from_file(file2)
+        instance = inst.create_instance_from_file(file)
         t1 = pfc()
-
+        labels, _, C = clust.DBCVRI(instance.maps, instance.demands, instance.v_capacities)
+        startRoutes,sol_start = cvns.first_route(instance.maps,labels,C)
         sol = ortS.solution_ORTools(instance,first_solution_strategy=routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
                                            local_search_metaheuristic=routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING,
-                                    time_limit_seconds=3
-                                    )
+                                           time_limit_seconds=1)
         t2 = pfc()
 
         t3 = pfc()
-        solution = instance.compute_sol(T=1, hmax=10,len_Taboo=10,temperature=10)
+        solution = instance.compute_sol(T=20, hmax=50,len_Taboo=10,temperature=20)
         t4 = pfc()
         print("\nval= \n",solution.value,"\n")
         feasible = solution.constraints()
