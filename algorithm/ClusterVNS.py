@@ -50,26 +50,30 @@ def first_route(points,labels, C):
 
 
 
-
 #fase dell'algoritmo di "esplorazione" casuale del vicinato
-def shake(sol,routes,points,demands,Q,mode):
-    # neigh_struct = np.random.randint(0,N + 1) #in base a quanti tipi di strutture di vicinato inserisco decido N che sarà costante
-    if mode == 'one':
-        neigh_struct = np.random.choice(np.array([0,1,2,3,4,5,6,7,8,9,10]))
-        # neigh_struct = np.random.choice(np.array([1,3]))
-        # neigh_struct = 2
-        routes,difference = hrst.neighbour_improvement(neigh_struct,routes, points, demands, Q)
-        sol = sol + difference
-    elif mode == 'cocktail':
-        N = np.random.randint(low = 2,high = 10)
-        i = 0
-        while i < N:
-            neigh_struct = np.random.choice(np.array([0,1,2,3,4,5,6,7,8,9,10]))
-#             neigh_struct = np.random.choice(np.array([1,3]))
-#             neigh_struct = 2
-            routes, difference = hrst.neighbour(neigh_struct, routes, points, demands, Q)
+def shake(sol,routes,points,demands,Q,mode,destruction_prob):
+    destFactor = np.random.choice(np.array([0, 1]), p=np.array([1 - destruction_prob, destruction_prob]))
+    if destFactor == 1:
+        # N = np.random.randint(1,3)
+        routes, sol = dstrp.destroyAndRepair(routes, sol, points, demands, Q)
+    else:
+     # neigh_struct = np.random.randint(0,N + 1) #in base a quanti tipi di strutture di vicinato inserisco decido N che sarà costante
+        if mode == 'one':
+            neigh_struct = np.random.choice(np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]))
+            # neigh_struct = np.random.choice(np.array([1,3]))
+            # neigh_struct = 2
+            routes,difference = hrst.neighbour(neigh_struct,routes, points, demands, Q)
             sol = sol + difference
-            i += 1
+        elif mode == 'cocktail':
+            N = np.random.randint(low = 2,high = 10)
+            i = 0
+            while i < N:
+                neigh_struct = np.random.choice(np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]))
+    #             neigh_struct = np.random.choice(np.array([1,3]))
+    #             neigh_struct = 2
+                routes, difference = hrst.neighbour(neigh_struct, routes, points, demands, Q)
+                sol = sol + difference
+                i += 1
     return routes,sol
 
  
@@ -111,7 +115,7 @@ def shake(sol,routes,points,demands,Q,mode):
 def first_improvement(sol,routes,points,demands,Q,hmax):
     difference = np.inf
     # neigh_struct = 0
-    n_str = np.array([1,0,2,3,4,5,6,7,8])
+    n_str = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14])
     # n_str = np.array([0,1,2,3])
 #     n_str = np.array([1,3])
 #     n_str = np.array([2])
@@ -177,7 +181,7 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,temperature):
     t = 0
     tp = temperature
     k = 0
-    annealing_prob = 1
+    annealing_prob = 0
     # mode = 'one'
     # while t - t0 <= T:
     while t < T:
@@ -198,8 +202,9 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,temperature):
         #     print("\n",inst.constraints(routes,demands,Q),"\n")
 
         # if taboo_counter > 2:
-        mode = 'cocktail'
-        x1, sol1 = shake(sol, routes, points, demands, Q, mode)
+        mode = 'one'
+        destruction_prob = np.exp(-pow((5/2*t/T - 0.8325546111576977),2))
+        x1, sol1 = shake(sol, routes, points, demands, Q, mode,destruction_prob)
 
         # mode = 'one'
 
@@ -224,10 +229,11 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,temperature):
                 # taboo_counter += 1
                 break
         if taboo_violated:
-            destFactor = np.random.choice(np.array([0, 1]), p=np.array([1 - annealing_prob, annealing_prob]))
-            if destFactor == 1:
+            # destFactor = np.random.choice(np.array([0, 1]), p=np.array([1 - annealing_prob, annealing_prob]))
+            # if destFactor == 1:
                 # N = np.random.randint(1,3)
-                routes, sol = dstrp.destroyAndRepair(routes, sol, points, demands, Q)
+            routes = x1
+            sol = sol1
             continue
         feasible,_,_ = inst.constraints(x2,demands,Q)
         if sol2 - sol < 0 and feasible == True:

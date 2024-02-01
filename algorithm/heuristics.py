@@ -341,6 +341,19 @@ def swap_inter_route_improvement(routes, points, demands, Q):
     else:
         return routes, 0
 
+def swap_inter_route_improvement_more(routes, points, demands, Q):
+    N = np.random.randint(1,np.size(points,axis=0))
+    n = 0
+    difference = 0
+    candidate_routes = routes.copy()
+    while n<N:
+        candidate_routes,diff = swap_inter_route_improvement(candidate_routes, points, demands, Q)
+        difference += diff
+        n+=1
+    feasible, candidate_routes, _ = inst.constraints(candidate_routes, demands, Q)
+    if feasible:
+        return candidate_routes, difference
+    return routes, 0
 
 # def move_node(routes, points, demands, Q):
 #
@@ -435,7 +448,7 @@ def move_node(routes, points, demands, Q):
     best_f = 0
 
     # Itera su tutte le possibili posizioni di inserimento del nodo nella seconda route
-    for j in range(1, np.size(r1_new) + 1):
+    for j in range(1, np.size(r1_new)):
         r1_new = np.insert(r1_new, obj=j, values=node1)  # Utilizza la copia modificata r1_new
         candidate_routes[route_ex[1]] = r1_new
 
@@ -496,7 +509,7 @@ def move_node_improvement(routes, points, demands, Q):
     best_f = 0
 
     # Itera su tutte le possibili posizioni di inserimento del nodo nella seconda route
-    for j in range(1, np.size(r1_new) + 1):
+    for j in range(1, np.size(r1_new)):
         r1_new = np.insert(r1_new, obj=j, values=node1)  # Utilizza la copia modificata r1_new
         candidate_routes[route_ex[1]] = r1_new
 
@@ -641,7 +654,7 @@ def relocate_more(routes, points, demands, Q):
     route_ind = np.random.choice(len(feasible_routes))
     route = feasible_routes[route_ind]
 
-    N = np.random.randint(2, len(route))
+    N = np.random.randint(1, len(route[1:-1]))
     n = 0
 
     while n < N:
@@ -672,7 +685,7 @@ def relocate_more(routes, points, demands, Q):
 
 
 def relocate_more_more(routes,points,demands,Q):
-    M = np.random.randint(2,len(routes))
+    M = np.random.randint(1,len(routes))
     m = 0
     candidate_routes, difference = relocate_more(routes, points, demands, Q)
     while m < M:
@@ -843,7 +856,19 @@ def swap_intra_route_improvement(routes, points, demands, Q):
     else:
         return routes, 0
 
-
+def swap_intra_route_improvement_more(routes, points, demands, Q):
+    N = np.random.randint(1,np.size(points,axis=0))
+    n = 0
+    difference = 0
+    candidate_routes = routes.copy()
+    while n<N:
+        candidate_routes,diff = swap_intra_route_improvement(candidate_routes, points, demands, Q)
+        difference += diff
+        n+=1
+    feasible, candidate_routes, _ = inst.constraints(candidate_routes, demands, Q)
+    if feasible:
+        return candidate_routes, difference
+    return routes, 0
 
 # def two_opt_exchange_outer(routes, points, demands, Q):
 #     start_feasible,routes,_ = inst.constraints(routes,demands,Q)
@@ -995,6 +1020,7 @@ def two_opt_exchange_outer(routes, points, demands, Q):
         return routes, 0
 
 
+
 def two_opt_exchange_outer_improvement(routes, points, demands, Q):
     start_feasible, routes, _ = inst.constraints(routes, demands, Q)
 
@@ -1054,7 +1080,19 @@ def two_opt_exchange_outer_improvement(routes, points, demands, Q):
     # Restituisci le route originali se non è stata trovata una soluzione migliore
     return routes, 0
 
-
+def two_opt_exchange_outer_improvement_more(routes, points, demands, Q):
+    N = np.random.randint(1,np.size(points,axis=0))
+    n = 0
+    difference = 0
+    candidate_routes = routes.copy()
+    while n<N:
+        candidate_routes,diff = two_opt_exchange_outer_improvement(candidate_routes, points, demands, Q)
+        difference += diff
+        n+=1
+    feasible, candidate_routes, _ = inst.constraints(candidate_routes, demands, Q)
+    if feasible:
+        return candidate_routes, difference
+    return routes, 0
 # def two_opt_exchange_inner(routes, points, demands, Q):
 #     start_feasible,routes,_ = inst.constraints(routes,demands,Q)
 #
@@ -1256,6 +1294,20 @@ def two_opt_exchange_inner_improvement(routes, points, demands, Q):
     # Restituisci le route originali se non è stata trovata una soluzione migliore
     return routes, 0
 
+
+def two_opt_exchange_inner_improvement_more(routes, points, demands, Q):
+    N = np.random.randint(1,np.size(points,axis=0))
+    n = 0
+    difference = 0
+    candidate_routes = routes.copy()
+    while n<N:
+        candidate_routes,diff = two_opt_exchange_inner_improvement(candidate_routes, points, demands, Q)
+        difference += diff
+        n+=1
+    feasible, candidate_routes, _ = inst.constraints(candidate_routes, demands, Q)
+    if feasible:
+        return candidate_routes, difference
+    return routes, 0
 def add_new_route_points(routes, points, demands, Q):
     new_route = [0]
     sum = 0
@@ -1280,6 +1332,7 @@ def add_new_route_points(routes, points, demands, Q):
     feasible,candidate_routes,_ = inst.constraints(routes, demands, Q)
     difference = inst.total_euclidean_distance(candidate_routes,points) - inst.total_euclidean_distance(routes,points)
     return candidate_routes,difference
+
 
 def add_new_route_edge(routes, points, demands, Q):
     new_route = [0]
@@ -1341,45 +1394,44 @@ def move_node_between_routes(routes, points, demands, Q):
     # Trova la posizione del nodo nella route
     node_index = np.where(r0 == node)[0][0]
     dist_original = dist(points[r0[node_index-1:node_index+2]])
-    # Trova gli indici dei nodi più vicini nella stessa route
-    # prev_node = r0[node_index - 1]
-    # next_node = r0[node_index + 1]
     r0_new = np.delete(r0,node_index)
-    # Cerca nelle altre route un nodo che soddisfi le condizioni
     min_distance = np.inf
-    best_route_index_new = -1
-    best_closest_node = -1
-
+    best_route_index_new = None
     for i, route in enumerate(routes):
         if i != route_ex_index:
             for j,candidate_node in enumerate(route[:-1]):
 
                 distance_to_candidate = dist(points[[route[j],node,route[j+1]]])
                 if distance_to_candidate < dist_original and distance_to_candidate < min_distance:
-                    new_route = np.insert(route,node,j)
+                    new_route = np.insert(route,j+1,node)
                     best_route_index_new = i
-    candidate_routes = routes.copy()
-    candidate_routes[route_ex_index] = r0_new
-    candidate_routes[best_route_index_new] = new_route
-    feasible,candidate_routes,_ = inst.constraints(candidate_routes,demands,Q)
-    if feasible:
-        difference = dist(points[r0_new]) + dist(points[new_route]) - dist(points[routes[best_route_index_new]]) - dist(points[r0])
-        return candidate_routes,difference
+    if best_route_index_new is not None:
+        candidate_routes = routes.copy()
+        candidate_routes[route_ex_index] = r0_new
+        candidate_routes[best_route_index_new] = new_route
+        feasible,candidate_routes,_ = inst.constraints(candidate_routes,demands,Q)
+        if feasible:
+            difference = dist(points[r0_new]) + dist(points[new_route]) - dist(points[routes[best_route_index_new]]) - dist(points[r0])
+            return candidate_routes,difference
+        else:
+            return routes,0
     else:
         return routes,0
-    # Crea una copia delle route
+
+
+def move_node_between_routes_more(routes, points, demands, Q):
+    N = np.random.randint(1,np.size(points,axis=0))
+    n = 0
+    difference = 0
     candidate_routes = routes.copy()
-
-        # Verifica la fattibilità della nuova soluzione
-        feasible, candidate_routes, _ = inst.constraints(candidate_routes, demands, Q)
-
-        if feasible:
-            return candidate_routes, difference
-        else:
-            return routes, 0
-    else:
-        return routes, 0
-
+    while n < N:
+        new_routes,diff = move_node_between_routes(candidate_routes,points,demands,Q)
+        difference += diff
+        n += 1
+    feasible, candidate_routes, _ = inst.constraints(candidate_routes, demands, Q)
+    if feasible:
+        return candidate_routes, difference
+    return routes, 0
 
 
 
@@ -1390,55 +1442,68 @@ def neighbour(case,routes, points, demands, Q): #mode può assumere i valori 'fe
 
     feasible = False
     same_len = False
+    difference = 0
     while not feasible or not same_len:
         t1 = pfc()
         if case == 0:
             new_routes, difference = move_more_nodes(routes, points, demands, Q) #lento
-            if difference >= 0 and debug == 'activated':
-                print("\n 0 no improvement \n")
+
         elif case == 1:
             new_routes, difference = swap_inter_route(routes, points, demands, Q) #problemi nel papparsi pezzi di routes
-            if difference >= 0 and debug == 'activated':
-                print("\n 1 no improvement \n")
+
         elif case == 2:
             new_routes, difference = move_node(routes, points, demands, Q) #problemi nel calcolo della differenza tra i due valori, possibile risolverli calcolandola direttamente
-            if difference >= 0 and debug == 'activated':
-                print("\n 2 no improvement \n")
+
         elif case == 3:
             new_routes, difference = swap_intra_route(routes, points, demands, Q) #problemi nel papparsi pezzi di routes
-            if difference >= 0 and debug == 'activated':
-                print("\n 3 no improvement \n")
+
         elif case == 4:
             new_routes, difference = two_opt_exchange_outer(routes, points, demands, Q) #lento
-            if difference >= 0 and debug == 'activated':
-                print("\n 4 no improvement \n")
+
         elif case == 5:
             new_routes, difference = two_opt_exchange_inner(routes, points, demands, Q) #lento
-            if difference >= 0 and debug == 'activated':
-                print("\n 5 no improvement \n")
+
         elif case == 6:
             new_routes, difference = add_new_route_points(routes, points, demands, Q)
-            if difference >= 0 and debug == 'activated':
-                print("\n 6 no improvement \n")
+
         elif case == 7:
             new_routes, difference = add_new_route_edge(routes, points, demands, Q)
-            if difference >= 0 and debug == 'activated':
-                print("\n 7 no improvement \n")
+
         elif case == 8:
             new_routes, difference = relocate(routes, points, demands, Q)
-            if difference >= 0 and debug == 'activated':
-                print("\n 8 no improvement \n")
+
         elif case == 9:
             new_routes, difference = relocate_more(routes, points, demands, Q)
-            if difference >= 0 and debug == 'activated':
-                print("\n 9 no improvement \n")
+
         elif case == 10:
             new_routes, difference = relocate_more_more(routes, points, demands, Q)
-            if difference >= 0 and debug == 'activated':
-                print("\n 10 no improvement \n")
+
+        elif case == 11:
+            new_routes, difference = move_node_between_routes(routes, points, demands, Q)
+
+        elif case == 12:
+            new_routes, difference = swap_intra_route_improvement_more(routes, points, demands, Q)
+
+        elif case == 13:
+            new_routes, difference = swap_inter_route_improvement_more(routes, points, demands, Q)
+
+        elif case == 14:
+            new_routes, difference = swap_intra_route_improvement_more(routes, points, demands, Q)
+
+        elif case == 15:
+            new_routes, difference = two_opt_exchange_outer_improvement_more(routes, points, demands, Q)
+
+        elif case == 16:
+            new_routes, difference = two_opt_exchange_inner_improvement_more(routes, points, demands, Q)
+
+
         t2 = pfc()
         if debug == 'activated':
             print("\n execution time case ", case ,":\n",t2-t1)
+            if difference >= 0:
+                print("\n", case, " no improvement \n")
+            else:
+                print("\n", case, " improvement \n")
         feasible,_,_ = inst.constraints(new_routes,demands,Q)
         same_len = len(np.unique(np.concatenate([route[1:-1] for route in routes]))) == len(np.unique(np.concatenate([route[1:-1] for route in new_routes])))
 
@@ -1447,29 +1512,30 @@ def neighbour(case,routes, points, demands, Q): #mode può assumere i valori 'fe
 
 def neighbour_improvement(case,routes, points, demands, Q): #mode può assumere i valori 'feasible' oppure 'exploration'
 
-    debug = 'activated'
-    # debug = ''
-
+    # debug = 'activated'
+    debug = ''
+    new_routes = routes.copy()
+    difference = 0
     feasible = False
     same_len = False
     while not feasible or not same_len:
         t1 = pfc()
-        if case == 5:
+        if case == 6:
             new_routes, difference = move_more_nodes(routes, points, demands, Q) #lento
 
         elif case == 3:
             new_routes, difference = swap_inter_route_improvement(routes, points, demands, Q) #problemi nel papparsi pezzi di routes
 
-        elif case == 0:
+        elif case == 1:
             new_routes, difference = move_node_improvement(routes, points, demands, Q) #problemi nel calcolo della differenza tra i due valori, possibile risolverli calcolandola direttamente
 
-        elif case == 1:
+        elif case == 0:
             new_routes, difference = swap_intra_route_improvement(routes, points, demands, Q) #problemi nel papparsi pezzi di routes
 
-        elif case == 8:
+        elif case == 9:
             new_routes, difference = two_opt_exchange_outer_improvement(routes, points, demands, Q) #lento
 
-        elif case == 7:
+        elif case == 8:
             new_routes, difference = two_opt_exchange_inner_improvement(routes, points, demands, Q) #lento
 
         elif case == 2:
@@ -1478,8 +1544,26 @@ def neighbour_improvement(case,routes, points, demands, Q): #mode può assumere 
         elif case == 4:
             new_routes, difference = relocate_more(routes, points, demands, Q)
 
-        elif case == 6:
+        elif case == 7:
             new_routes, difference = relocate_more_more(routes, points, demands, Q)
+
+        elif case == 5:
+            new_routes, difference = move_node_between_routes(routes, points, demands, Q)
+
+        elif case == 10:
+            new_routes, difference = swap_intra_route_improvement_more(routes, points, demands, Q)
+
+        elif case == 11:
+            new_routes, difference = swap_inter_route_improvement_more(routes, points, demands, Q)
+
+        elif case == 12:
+            new_routes, difference = swap_intra_route_improvement_more(routes, points, demands, Q)
+
+        elif case == 14:
+            new_routes, difference = two_opt_exchange_outer_improvement_more(routes, points, demands, Q)
+
+        elif case == 13:
+            new_routes, difference = two_opt_exchange_inner_improvement_more(routes, points, demands, Q)
 
         t2 = pfc()
 

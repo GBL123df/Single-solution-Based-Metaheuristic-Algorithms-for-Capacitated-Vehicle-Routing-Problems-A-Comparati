@@ -818,7 +818,7 @@ def random_insertion(removed,routes, points, demands, Q):
     else:
         return candidateRoutes, np.array(notInserted,dtype=int)
 
-def repair(removed,routes, points, demands, Q,routestart):
+def repair(removed,routes, points, demands, Q):
     total = np.size(points,axis=0)
     remotion = removed.copy()
     feasible = True
@@ -844,7 +844,7 @@ def repair(removed,routes, points, demands, Q,routestart):
 
 def destroyAndRepair(routes,sol, points, demands, Q): #, N):
     new_routes, removed = destroy(routes, points, demands, Q) #, N)
-    new_routes = repair(removed, new_routes, points, demands, Q,routes)
+    new_routes = repair(removed, new_routes, points, demands,Q)
     routes_hpstack = np.unique(np.hstack([route[1:-1] for route in routes]))
     new_routes_hpstack = np.unique(np.hstack([route[1:-1] for route in routes]))
     if np.size(routes_hpstack) != np.size(new_routes_hpstack):
