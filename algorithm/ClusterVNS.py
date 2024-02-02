@@ -59,7 +59,8 @@ def shake(sol,routes,points,demands,Q,mode,destruction_prob):
     else:
      # neigh_struct = np.random.randint(0,N + 1) #in base a quanti tipi di strutture di vicinato inserisco decido N che sarà costante
         if mode == 'one':
-            neigh_struct = np.random.choice(np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]))
+            neigh_struct = np.random.choice(np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]))
+           # neigh_struct = np.random.choice(np.array([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]))
             # neigh_struct = np.random.choice(np.array([1,3]))
             # neigh_struct = 2
             routes,difference = hrst.neighbour(neigh_struct,routes, points, demands, Q)
@@ -68,7 +69,8 @@ def shake(sol,routes,points,demands,Q,mode,destruction_prob):
             N = np.random.randint(low = 2,high = 10)
             i = 0
             while i < N:
-                neigh_struct = np.random.choice(np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]))
+                # neigh_struct = np.random.choice(np.array([5,6,7,8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]))
+                neigh_struct = np.random.choice(np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]))
     #             neigh_struct = np.random.choice(np.array([1,3]))
     #             neigh_struct = 2
                 routes, difference = hrst.neighbour(neigh_struct, routes, points, demands, Q)
@@ -115,7 +117,7 @@ def shake(sol,routes,points,demands,Q,mode,destruction_prob):
 def first_improvement(sol,routes,points,demands,Q,hmax):
     difference = np.inf
     # neigh_struct = 0
-    n_str = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14])
+    n_str = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15])
     # n_str = np.array([0,1,2,3])
 #     n_str = np.array([1,3])
 #     n_str = np.array([2])
@@ -171,7 +173,7 @@ def equalSol(couple1,couple2):
         else: return False
 
 
-def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,temperature):
+def VNS(points, labels, demands, Q,T,C,hmax,temperature):
     # debug = False
     routes,sol = first_route(points,labels,C)
     taboo = []
@@ -219,30 +221,30 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,temperature):
         #     t_4 = pfc()
         #     print("\n Fase 3 improvement = ", t_4-t_3,"\n" )
         #     print("\n",inst.constraints(x2,demands,Q),"\n")
-        taboo_violated = False
-        for old in taboo:
-            if equalSol((x2,sol2),old):
-                routes = x1
-                sol = sol1
-                t = pfc()
-                taboo_violated = True
-                # taboo_counter += 1
-                break
-        if taboo_violated:
-            # destFactor = np.random.choice(np.array([0, 1]), p=np.array([1 - annealing_prob, annealing_prob]))
-            # if destFactor == 1:
-                # N = np.random.randint(1,3)
-            routes = x1
-            sol = sol1
-            continue
+        # taboo_violated = False
+        # for old in taboo:
+        #     if equalSol((x2,sol2),old):
+        #         routes = x1
+        #         sol = sol1
+        #         t = pfc()
+        #         taboo_violated = True
+        #         # taboo_counter += 1
+        #         break
+        # if taboo_violated:
+        #     # destFactor = np.random.choice(np.array([0, 1]), p=np.array([1 - annealing_prob, annealing_prob]))
+        #     # if destFactor == 1:
+        #         # N = np.random.randint(1,3)
+        #     routes = x1
+        #     sol = sol1
+        #     continue
         feasible,_,_ = inst.constraints(x2,demands,Q)
         if sol2 - sol < 0 and feasible == True:
             routes = x2
             sol = sol2
-            taboo.append((routes,sol))
-            # taboo_counter = 0
-            if len(taboo) > len_Taboo:
-                taboo.pop(0)
+            # taboo.append((routes,sol))
+            # # taboo_counter = 0
+            # if len(taboo) > len_Taboo:
+            #     taboo.pop(0)
         elif sol2 - sol >= 0 and feasible == True:
             annealing_prob = np.exp((sol-sol2)/tp)
             hill_climb = np.random.choice([0,1],p = [1-annealing_prob,annealing_prob])
@@ -250,11 +252,11 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,temperature):
             if hill_climb == 1:
                 routes = x2
                 sol = sol2
-                add_to_taboo = np.random.choice([0,1],p = [1-annealing_prob,annealing_prob])
-                if add_to_taboo == 1:
-                    taboo.append((routes, sol))
-                if len(taboo) > len_Taboo:
-                    taboo.pop(0)
+                # add_to_taboo = np.random.choice([0,1],p = [1-annealing_prob,annealing_prob])
+                # if add_to_taboo == 1:
+                #     taboo.append((routes, sol))
+                # if len(taboo) > len_Taboo:
+                #     taboo.pop(0)
         # if debug:
         #     t_5 = pfc()
         #     print("\nFase 4 taboo controls = ", t_5-t_4,"\n" )
@@ -265,17 +267,17 @@ def VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,temperature):
         # k = np.log(t - t0)
         k = np.log(t)
 
-    if taboo:
-        vals = [tab[1] for tab in taboo]
-        best = np.argmin(vals)
-        return taboo[best][0],taboo[best][1]
-    else:
-        return routes,sol
+    # if taboo:
+    #     vals = [tab[1] for tab in taboo]
+    #     best = np.argmin(vals)
+    #     return taboo[best][0],taboo[best][1]
+    # else:
+    return routes,sol
 
 
 
-def CluVNS(points,demands, Q,T,hmax,len_Taboo,temperature):
+def CluVNS(points,demands, Q,T,hmax,temperature):
     labels,cum_qt,C = clust.DBCVRI(points,demands,Q)
-    routes,sol = VNS(points, labels, demands, Q,T,C,hmax,len_Taboo,temperature)
+    routes,sol = VNS(points, labels, demands, Q,T,C,hmax,temperature)
     return routes,sol
 

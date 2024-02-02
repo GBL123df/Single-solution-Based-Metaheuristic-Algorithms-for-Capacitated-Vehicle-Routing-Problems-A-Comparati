@@ -249,7 +249,7 @@ from algorithm import heuristics as hrst
 def random_client_removal(routes, points, demands, Q):
     routes_trunk = [route[1:-1] for route in routes]
     monoroute = np.concatenate(routes_trunk)
-    N_points = np.random.randint(1, len(monoroute))
+    N_points = np.random.randint(1, len(monoroute)//3)
     remove = np.random.choice(monoroute, size=N_points, replace=False)
     candidateRoutes = []
     for r in routes:
@@ -304,7 +304,7 @@ def zone_removal(routes, points, demands, Q):
 def prox_based_removal(routes, points, demands, Q):
     routes_trunk = [route[1:-1] for route in routes]
     monoroute = np.concatenate(routes_trunk)
-    N_points = np.random.randint(1,np.size(monoroute, axis=0))  # eventualmente modificare questo criterio di scelta
+    N_points = np.random.randint(1,np.size(monoroute, axis=0)//3)  # eventualmente modificare questo criterio di scelta
     toBeRemoved = np.random.choice(monoroute,size=N_points,replace=False)
     remove = toBeRemoved.copy()
     for p in toBeRemoved:

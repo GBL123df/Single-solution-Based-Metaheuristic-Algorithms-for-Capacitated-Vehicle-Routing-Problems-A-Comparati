@@ -1433,6 +1433,80 @@ def move_node_between_routes_more(routes, points, demands, Q):
         return candidate_routes, difference
     return routes, 0
 
+def routes_breaker(routes, points, demands, Q):
+    route_ex = np.random.choice(np.arange(len(routes)))
+    route = routes[route_ex]
+    taboo = []
+    taboo.append(route_ex)
+    while len(route) <= 4 and len(taboo) < len(routes):
+        route_ex = np.random.choice(np.setdiff1d(np.arange(len(routes)),taboo))
+        route = routes[route_ex]
+    if len(route) > 4:
+        diff0 = dist(points[route])
+        best_diff = np.inf
+        best1 = []
+        best2 = []
+        for i,r in enumerate(route[2:-2]):
+            new_route1 = np.append(route[:i+1],0)
+            new_route2 = np.concatenate([np.array([0]),route[i+1:]])
+            difference = dist(points[new_route1]) + dist(points[new_route2]) - diff0
+            if difference < best_diff:
+               best_diff = difference
+               best1 = new_route1
+               best2 = new_route2
+        candidate_routes = routes.copy()
+        candidate_routes[route_ex] = best1
+        candidate_routes.append(best2)
+        feasible,candidate_routes,_ = inst.constraints(candidate_routes,demands,Q)
+        if feasible:
+            return candidate_routes,best_diff
+        else:
+            return routes, 0
+    else:
+        return routes,0
+
+def merge_routes(routes,points, demands, Q):
+    # Calcola la somma delle domande cumulate per ogni route
+    demands_cumsum = [np.sum(demands[route]) for route in routes]
+
+    # Trova le due route con la domanda cumulata minore
+    min_indices = np.argsort(demands_cumsum)[:2]
+    route1, route2 = routes[min_indices[0]], routes[min_indices[1]]
+
+    if np.sum(demands_cumsum[:2]) > Q:
+        return routes, 0
+    # Calcola tutte le possibili combinazioni di merge mantenendo l'integrità delle route
+    possible_merges = []
+
+    merge_combinations = [
+        np.concatenate([route1[:-1],route2[1:]]),
+        np.concatenate([route1[:-1],np.flip(route2[:-1])]),
+        np.concatenate([np.flip(route1[:-1]), route2[1:]]),
+        np.concatenate([np.flip(route1[:-1]), np.flip(route2[:-1])]),
+        np.concatenate([route2[:-1], route1[1:]]),
+        np.concatenate([route2[:-1], np.flip(route1[1:])]),
+        np.concatenate([np.flip(route2[:-1]), route1[1:]]),
+        np.concatenate([np.flip(route2[:-1]), np.flip(route1[1:])])
+    ]
+    best_route = []
+    best_diff  = np.inf
+    d1 = dist(points[route1])
+    d2 = dist(points[route2])
+    for merged_route in merge_combinations:
+        difference  = dist(points(merged_route)) -d1 -d2
+        if difference < best_diff:
+            best_diff = difference
+            best_route = merged_route
+
+    # Aggiorna le route
+    candidate_routes = routes.copy()
+    candidate_routes[min_indices[0]] = best_route
+    candidate_routes.pop(min_indices[1])
+    feasible, candidate_routes, _ = inst.constraints(candidate_routes, routes, demands, Q)
+    if feasible:
+        return candidate_routes, best_diff
+    else:
+        return routes, 0
 
 
 def neighbour(case,routes, points, demands, Q): #mode può assumere i valori 'feasible' oppure 'exploration'
@@ -1496,6 +1570,12 @@ def neighbour(case,routes, points, demands, Q): #mode può assumere i valori 'fe
         elif case == 16:
             new_routes, difference = two_opt_exchange_inner_improvement_more(routes, points, demands, Q)
 
+        elif case == 17:
+            new_routes, difference = routes_breaker(routes, points, demands, Q)
+
+        elif case == 18:
+            new_routes, difference = merge_routes(routes, points, demands, Q)
+
 
         t2 = pfc()
         if debug == 'activated':
@@ -1550,20 +1630,23 @@ def neighbour_improvement(case,routes, points, demands, Q): #mode può assumere 
         elif case == 5:
             new_routes, difference = move_node_between_routes(routes, points, demands, Q)
 
-        elif case == 10:
-            new_routes, difference = swap_intra_route_improvement_more(routes, points, demands, Q)
-
         elif case == 11:
-            new_routes, difference = swap_inter_route_improvement_more(routes, points, demands, Q)
+            new_routes, difference = swap_intra_route_improvement_more(routes, points, demands, Q)
 
         elif case == 12:
-            new_routes, difference = swap_intra_route_improvement_more(routes, points, demands, Q)
-
-        elif case == 14:
-            new_routes, difference = two_opt_exchange_outer_improvement_more(routes, points, demands, Q)
+            new_routes, difference = swap_inter_route_improvement_more(routes, points, demands, Q)
 
         elif case == 13:
+            new_routes, difference = swap_intra_route_improvement_more(routes, points, demands, Q)
+
+        elif case == 15:
+            new_routes, difference = two_opt_exchange_outer_improvement_more(routes, points, demands, Q)
+
+        elif case == 14:
             new_routes, difference = two_opt_exchange_inner_improvement_more(routes, points, demands, Q)
+
+        elif case == 10:
+            new_routes, difference = merge_routes(routes, points, demands, Q)
 
         t2 = pfc()
 
