@@ -5,6 +5,7 @@ from algorithm import Instance as inst
 from algorithm import clustering as clust
 from algorithm import heuristics as hrst
 from algorithm import destroyRepair as dstrp
+from algorithm import populationPhase as pph
 
 N = 3
 
@@ -173,7 +174,7 @@ def equalSol(couple1,couple2):
         else: return False
 
 
-def VNS(points, labels, demands, Q,T,C,hmax,temperature):
+def VNS(points, labels, demands, Q,T,C,hmax,temperature,len_taboo):
     # debug = False
     routes,sol = first_route(points,labels,C)
     taboo = []
@@ -241,14 +242,15 @@ def VNS(points, labels, demands, Q,T,C,hmax,temperature):
         if sol2 - sol < 0 and feasible == True:
             routes = x2
             sol = sol2
-            # taboo.append((routes,sol))
+            taboo.append((routes,sol))
             # # taboo_counter = 0
-            # if len(taboo) > len_Taboo:
-            #     taboo.pop(0)
+            if len(taboo) > len_taboo:
+                routes,sol = pph.mixing(taboo,points,demands,Q,annealing_prob)
+                taboo = []
         elif sol2 - sol >= 0 and feasible == True:
             annealing_prob = np.exp((sol-sol2)/tp)
             hill_climb = np.random.choice([0,1],p = [1-annealing_prob,annealing_prob])
-            tp = temperature*pow(0.9,k)
+            # tp = temperature*pow(0.8,k)
             if hill_climb == 1:
                 routes = x2
                 sol = sol2
@@ -266,18 +268,19 @@ def VNS(points, labels, demands, Q,T,C,hmax,temperature):
         t +=1
         # k = np.log(t - t0)
         k = np.log(t)
+        tp = temperature * pow(0.8, k)
 
-    # if taboo:
-    #     vals = [tab[1] for tab in taboo]
-    #     best = np.argmin(vals)
-    #     return taboo[best][0],taboo[best][1]
-    # else:
-    return routes,sol
+    if taboo:
+        vals = [tab[1] for tab in taboo]
+        best = np.argmin(vals)
+        return taboo[best][0],taboo[best][1]
+    else:
+        return routes,sol
 
 
 
-def CluVNS(points,demands, Q,T,hmax,temperature):
+def CluVNS(points,demands, Q,T,hmax,temperature,len_taboo):
     labels,cum_qt,C = clust.DBCVRI(points,demands,Q)
-    routes,sol = VNS(points, labels, demands, Q,T,C,hmax,temperature)
+    routes,sol = VNS(points, labels, demands, Q,T,C,hmax,temperature,len_taboo)
     return routes,sol
 
