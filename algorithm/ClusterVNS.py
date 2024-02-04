@@ -207,6 +207,7 @@ def VNS(points, labels, demands, Q,T,C,hmax,temperature,len_taboo):
         # if taboo_counter > 2:
         mode = 'one'
         destruction_prob = np.exp(-pow((5/2*t/T - 0.8325546111576977),2))
+
         x1, sol1 = shake(sol, routes, points, demands, Q, mode,destruction_prob)
 
         # mode = 'one'
@@ -244,7 +245,7 @@ def VNS(points, labels, demands, Q,T,C,hmax,temperature,len_taboo):
             sol = sol2
             taboo.append((routes,sol))
             # # taboo_counter = 0
-            if len(taboo) > len_taboo:
+            if len(taboo) == len_taboo:
                 routes,sol = pph.mixing(taboo,points,demands,Q,annealing_prob)
                 taboo = []
         elif sol2 - sol >= 0 and feasible == True:
@@ -252,13 +253,14 @@ def VNS(points, labels, demands, Q,T,C,hmax,temperature,len_taboo):
             hill_climb = np.random.choice([0,1],p = [1-annealing_prob,annealing_prob])
             # tp = temperature*pow(0.8,k)
             if hill_climb == 1:
-                routes = x2
-                sol = sol2
+                routes = x1
+                sol = sol1
                 # add_to_taboo = np.random.choice([0,1],p = [1-annealing_prob,annealing_prob])
                 # if add_to_taboo == 1:
                 #     taboo.append((routes, sol))
-                # if len(taboo) > len_Taboo:
-                #     taboo.pop(0)
+                # if len(taboo) == len_taboo:
+                #     routes, sol = pph.mixing(taboo, points, demands, Q, annealing_prob)
+                #     taboo = []
         # if debug:
         #     t_5 = pfc()
         #     print("\nFase 4 taboo controls = ", t_5-t_4,"\n" )
