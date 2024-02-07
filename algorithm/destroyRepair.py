@@ -818,6 +818,24 @@ def random_insertion(removed,routes, points, demands, Q):
     else:
         return candidateRoutes, np.array(notInserted,dtype=int)
 
+def newRoute_Insertion(removed,routes, points, demands, Q):
+    candidateRoutes = routes.copy()
+    newRoute = [0]
+    N = np.random.randint(1,len(removed))
+    n = 0
+    yet_ins = []
+    while n < N and len(np.setdiff1d(removed,yet_ins)) > 0 and np.sum(demands[newRoute]) + min(demands[np.setdiff1d(removed,yet_ins)])<= Q:
+        point = np.random.choice(np.setdiff1d(removed,yet_ins))
+        newRoute.append(point)
+        yet_ins.append(point)
+    newRoute.append(0)
+    candidateRoutes.append(np.array(newRoute))
+    feasible,candidateRoutes,_ = inst.constraints(candidateRoutes,demands,Q)
+    if feasible:
+        return candidateRoutes,np.setdiff1d(removed,yet_ins)
+    else:
+        return  routes,removed
+
 def repair(removed,routes, points, demands, Q):
     total = np.size(points,axis=0)
     remotion = removed.copy()

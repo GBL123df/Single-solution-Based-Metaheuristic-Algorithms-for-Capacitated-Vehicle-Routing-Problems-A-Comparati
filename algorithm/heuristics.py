@@ -1674,4 +1674,4 @@ def neighbour_improvement(case,routes, points, demands, Q): #mode può assumere 
 # con epsilon learning rate, avrò probabilità[i] = probabilità[i] + epsilon e
 # probabilità[non i] = probabilità[non i] - epsilon/N, N è il numero di tipi di movimenti diversi.
 #Sarebbe bello trovare una versione moltiplicativa: probabilità[i] = (1 + epsilon)*probabilità(i),
-# probabilità[non i] = beta*probabilità[non i] con beta = (1 - (1-epsilon)*probabilità[i])/(1 - probabilità[i])
+# probabilità[non i] = beta*probabilità[non i] con beta = (1 - (1+epsilon)*probabilità[i])/(1 - probabilità[i])

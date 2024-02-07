@@ -11,7 +11,7 @@ def perturbation(routes1,routes2,points,demands,Q,route,node_idx):
         for i,r in enumerate(routes1):
             for j,e in enumerate(r[1:-1]):
                 if r[j] == to_be_swapped:
-                    position = [i,j]
+                    position = np.array([i,j])
                     break
         if position is not None:
             condition  = np.sum(demands[routes1[position[0]]]) - demands[routes1[position[0]][position[1]]] + demands[node_val] <= Q \
@@ -36,7 +36,7 @@ def crossover(sol1,routes1,routes2,points,demands,Q,CR):
                 continue
             if np.random.rand() < CR:
                 candidate_routes,position = perturbation(candidate_routes,routes2,points,demands,Q,i,j)
-                if position:
+                if position is not None:
                     positions.append(position)
     feasible,candidate_routes,_ = inst.constraints(candidate_routes,demands,Q)
     if feasible:
