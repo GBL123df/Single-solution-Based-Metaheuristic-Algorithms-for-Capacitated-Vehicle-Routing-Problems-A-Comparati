@@ -32,7 +32,7 @@ def crossover(sol1,routes1,routes2,points,demands,Q,CR):
     positions = []
     for i,r in enumerate(routes2):
         for j,n in enumerate(r[1:-1]):
-            if [i,j] in positions:
+            if np.any(positions == [i, j]):
                 continue
             if np.random.rand() < CR:
                 candidate_routes,position = perturbation(candidate_routes,routes2,points,demands,Q,i,j)
