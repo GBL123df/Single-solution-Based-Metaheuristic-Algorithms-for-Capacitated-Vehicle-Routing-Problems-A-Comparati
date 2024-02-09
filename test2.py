@@ -264,7 +264,7 @@ class TestBenchmarking(unittest.TestCase):
         file4 = os.path.join(self.path, file4)
         file5 = os.path.join(self.path, file5)
 
-        instance = inst.create_instance_from_file(file)
+        instance = inst.create_instance_from_file(file2)
         data = create_data_model(instance)
         label, cum_qt, C =clu.DBCVRI(instance.maps,instance.demands,instance.v_capacities)
         startRoutes,sol_start = cvns.first_route(instance.maps,label,C)
@@ -306,7 +306,7 @@ class TestBenchmarking(unittest.TestCase):
         file6 = os.path.join(self.path, file6)
         file7 = os.path.join(self.path, file7)
 
-        instance = inst.create_instance_from_file(file)
+        instance = inst.create_instance_from_file(file2)
         t1 = pfc()
         labels, _, C = clust.DBCVRI(instance.maps, instance.demands, instance.v_capacities)
         startRoutes,sol_start = cvns.first_route(instance.maps,labels,C)
@@ -316,7 +316,7 @@ class TestBenchmarking(unittest.TestCase):
         t2 = pfc()
 
         t3 = pfc()
-        solution = instance.compute_sol(T=5, hmax=20,temperature=20,len_taboo=10,start = 2,mode=2)
+        solution = instance.compute_sol(T=10, hmax=2,temperature=20,len_taboo=10,start = 2,mode=2)
         t4 = pfc()
         print("\nval= \n",solution.value,"\n")
         feasible = solution.constraints()
@@ -324,9 +324,16 @@ class TestBenchmarking(unittest.TestCase):
         sol.plot_routes()
         time_ortools = t2-t1
         time_cvns = t4-t3
+        distance_total = inst.total_euclidean_distance(solution.routes,solution.maps)
+        self.assertGreaterEqual(0.001*distance_total,abs(solution.value-distance_total),"case1")
+        self.assertGreaterEqual(0.1 * distance_total, abs(solution.value - sol.value),"case2")
 if __name__ == '__main__':
     unittest.main()
     test_suite = unittest.TestLoader().loadTestsFromTestCase(TestBenchmarking)
     test_result = unittest.TextTestRunner().run(test_suite)
 
 
+#proporre al prof l'idea di fare un'analisi sull'utilizzo di varie combinazioni algoritmiche e confrontarle fra loro e
+# OR tools, in modo da avere un riscontro tematico meno fallimentare
+#es. VNS vs ILS oppure improve1 vs improve2 e poi tutto vs OR tools
+#controlli su poche istanze

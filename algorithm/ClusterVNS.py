@@ -236,59 +236,197 @@ def shake2(sol,routes,points,demands,Q,mode,perturb,probs):
 #     if difference >= 0:
 #         return routes,sol
 
-def first_improvement2(sol, routes, points, demands, Q, hmax):
+def improvement2(sol, routes, points, demands, Q, hmax):
     difference = np.inf
+    # diversification = np.array([1, 3, 5, 6, 9, 10])
+    # intensification = np.array([0, 2, 4, 7, 8])
     diversification = np.array([1, 3, 5, 6, 9, 10, 12, 13, 15])
     # diversification = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
     intensification = np.array([0, 2, 4, 7, 8, 11, 14])
-    best_diversification_solution = sol.copy()  # Soluzione migliore trovata durante la diversificazione
+    best_solution = sol.copy()  # Soluzione migliore trovata durante la diversificazione
     new_sol = sol.copy()
     new_routes = routes.copy()
     best_routes = routes.copy()
     # Divide hmax in due parti uguali per le due fasi
+    h = 0
+    j = 0
+    neigh_struct = diversification[j]
 
     # Fase di diversificazione
-    for h in range(hmax):
-        j = 0
-        neigh_struct = diversification[j]
-        while True:
-            new_routes, difference = hrst.neighbour_improvement(neigh_struct, routes, points, demands, Q)
-            if difference < 0:
-                new_sol = sol + difference
-                if difference < best_diversification_solution:
-                    best_diversification_solution = new_sol.copy()
-                    best_routes = new_routes.copy()
-                break
-            if neigh_struct == diversification[-1]:
-                break
-            else:
-                j += 1
-                neigh_struct = diversification[j]
-    new_routes = best_routes
-    new_sol = best_diversification_solution
+    while h < hmax:
+        new_routes, difference = hrst.neighbour_improvement(neigh_struct, best_routes, points, demands, Q)
+        if difference < 0:
+            new_sol += difference
+            best_solution = new_sol.copy()
+            best_routes = new_routes.copy()
+            # break
+            #     continue
+
+        if neigh_struct == diversification[-1]:
+            # break
+            j = 0
+            neigh_struct = diversification[j]
+            h+=1
+        else:
+            j += 1
+            neigh_struct = diversification[j]
+    new_routes = best_routes.copy()
+    new_sol = best_solution
     # Fase di intensificazione
-    for h in range(hmax):
-        j = 0
-        neigh_struct = intensification[j]
-        while True:
-            new_routes, difference = hrst.neighbour_improvement(best_diversification_solution, new_routes, points,
-                                                                demands, Q)
-            if difference < 0:
-                new_sol = sol + difference
-                if difference < best_diversification_solution:
-                    best_diversification_solution = new_sol.copy()
-                    best_routes = new_routes.copy()
-                break
-            if neigh_struct == intensification[-1]:
-                break
-            else:
-                j += 1
-                neigh_struct = intensification[j]
+    h = 0
+    j = 0
+    neigh_struct = intensification[j]
+    while h < hmax:
+
+        new_routes, difference = hrst.neighbour_improvement(neigh_struct, best_routes, points, demands, Q)
+        if difference < 0:
+            new_sol +=  difference
+            if difference < best_solution:
+                best_solution = new_sol.copy()
+                best_routes = new_routes.copy()
+            # break
+            #     continue
+        if neigh_struct == intensification[-1]:
+            # break
+            j = 0
+            neigh_struct = intensification[j]
+            h += 1
+        else:
+            j += 1
+            neigh_struct = intensification[j]
 
     # Verifica la fattibilità della soluzione finale
     feasible, best_routes, _ = inst.constraints(best_routes, demands, Q)
     if feasible:
-        return best_routes, best_diversification_solution
+        return best_routes, best_solution
+    else:
+        return routes, sol
+
+def improvement2bis(sol, routes, points, demands, Q, hmax):
+    difference = np.inf
+    # diversification = np.array([1, 3, 5, 6, 9, 10])
+    # intensification = np.array([0, 2, 4, 7, 8])
+    # diversification = np.array([1, 3, 5, 6, 9, 10, 12, 13, 15])
+    diversification = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+    intensification = np.array([0, 2, 4, 7, 8, 11, 14])
+    best_solution = sol.copy()  # Soluzione migliore trovata durante la diversificazione
+    new_sol = sol.copy()
+    new_routes = routes.copy()
+    best_routes = routes.copy()
+    # Divide hmax in due parti uguali per le due fasi
+    h = 0
+    j = 0
+    # Fase di diversificazione
+    while h < hmax:
+        neigh_struct = diversification[j]
+        new_routes, difference = hrst.neighbour_improvement(neigh_struct, routes, points, demands, Q)
+        new_sol = sol + difference
+        if new_sol < best_solution:
+            best_solution = new_sol.copy()
+            best_routes = new_routes.copy()
+            # break
+            #     continue
+
+        if neigh_struct == diversification[-1]:
+            # break
+            j = 0
+            neigh_struct = diversification[j]
+            h+=1
+        else:
+            j += 1
+            neigh_struct = diversification[j]
+    new_start_routes = best_routes.copy()
+    new_start_sol = best_solution
+    # Fase di intensificazione
+    h = 0
+    j = 0
+    while h < hmax:
+        new_routes, difference = hrst.neighbour_improvement(neigh_struct, new_start_routes, points, demands, Q)
+        new_sol = new_start_sol + difference
+        if new_start_sol < best_solution:
+            best_solution = new_sol.copy()
+            best_routes = new_routes.copy()
+            # break
+            #     continue
+        if neigh_struct == intensification[-1]:
+            # break
+            j = 0
+            neigh_struct = intensification[j]
+            h += 1
+        else:
+            j += 1
+            neigh_struct = intensification[j]
+
+    # Verifica la fattibilità della soluzione finale
+    feasible, best_routes, _ = inst.constraints(best_routes, demands, Q)
+    if feasible:
+        return best_routes, best_solution
+    else:
+        return routes, sol
+
+def improvement3(sol, routes, points, demands, Q, hmax):
+    difference = np.inf
+    # diversification = np.array([1, 3, 5, 6, 9, 10])
+    # intensification = np.array([0, 2, 4, 7, 8])
+    # diversification = np.array([1, 3, 5, 6, 9, 10, 12, 13, 15])
+    diversification = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+    intensification = np.array([0, 2, 4, 7, 8, 11, 14])
+    best_solution = sol.copy()  # Soluzione migliore trovata durante la diversificazione
+    new_sol = sol.copy()
+    new_routes = routes.copy()
+    best_routes = routes.copy()
+    # Divide hmax in due parti uguali per le due fasi
+    h = 0
+    j = 0
+    neigh_struct = diversification[j]
+
+    # Fase di diversificazione
+    while h < hmax:
+        new_routes, difference = hrst.neighbour_improvement(neigh_struct, best_routes, points, demands, Q)
+        if difference < 0:
+            new_sol += difference
+            best_solution = new_sol.copy()
+            best_routes = new_routes.copy()
+            # break
+            #     continue
+
+        if neigh_struct == diversification[-1]:
+            # break
+            j = 0
+            neigh_struct = diversification[j]
+            h+=1
+        else:
+            j += 1
+            neigh_struct = diversification[j]
+    new_routes = best_routes.copy()
+    new_sol = best_solution
+    # Fase di intensificazione
+    h = 0
+    j = 0
+    neigh_struct = intensification[j]
+    while h < hmax:
+
+        new_routes, difference = hrst.neighbour_improvement(neigh_struct, best_routes, points, demands, Q)
+        if difference < 0:
+            new_sol +=  difference
+            if difference < best_solution:
+                best_solution = new_sol.copy()
+                best_routes = new_routes.copy()
+            # break
+            #     continue
+        if neigh_struct == intensification[-1]:
+            # break
+            j = 0
+            neigh_struct = intensification[j]
+            h += 1
+        else:
+            j += 1
+            neigh_struct = intensification[j]
+
+    # Verifica la fattibilità della soluzione finale
+    feasible, best_routes, _ = inst.constraints(best_routes, demands, Q)
+    if feasible:
+        return best_routes, best_solution
     else:
         return routes, sol
 
@@ -327,40 +465,37 @@ def first_improvement(sol, routes, points, demands, Q, hmax):
     difference = np.inf
     n_str = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
 
-    best_solution = sol.copy()  # Soluzione migliore trovata durante la ricerca
-
+    new_sol = sol.copy()
+    best_solution = sol.copy()
+    new_routes = routes.copy()
+    best_routes = routes.copy()
     h = 0
     j = 0
     neigh_struct = n_str[j]
     while h < hmax:
-        if len(n_str) == 1:
-            new_routes, difference = hrst.neighbour_improvement(neigh_struct, routes, points, demands, Q)
-            h += 1
-            if difference < 0:
-                new_sol = sol + difference
-                if difference < best_solution:
-                    best_solution = new_sol.copy()
-                    best_routes = new_routes.copy()
-                return best_routes, best_solution
-        else:
-            new_routes, difference = hrst.neighbour_improvement(neigh_struct, routes, points, demands, Q)
-            if difference < 0:
-                new_sol = sol + difference
-                if difference < best_solution:
-                    best_solution = new_sol.copy()
-                    best_routes = new_routes.copy()
-                return best_routes, best_solution
-            if neigh_struct == n_str[-1]:
-                j = 0
-                neigh_struct = n_str[j]
-                h += 1
-                continue
-            else:
-                j += 1
-                neigh_struct = n_str[j]
+        neigh_struct = n_str[j]
+        new_routes, difference = hrst.neighbour_improvement(neigh_struct, best_routes, points, demands, Q)
+        if difference < 0:
+            new_sol += + difference
+            best_solution = new_sol.copy()
+            best_routes = new_routes.copy()
+            # break
+            #     continue
 
-    if difference >= 0:
-        return routes, sol
+        if neigh_struct == n_str[-1]:
+            # break
+            j = 0
+            neigh_struct = n_str[j]
+            h += 1
+        else:
+            j += 1
+            neigh_struct = n_str[j]
+
+    feasible,best_routes,_ = inst.constraints(best_routes,demands,Q)
+    if feasible:
+        return best_routes,best_solution
+    else:
+        return routes,sol
 #funzione obbiettivo
 #  def F():
 
@@ -404,7 +539,7 @@ def VNS(routes,sol,points,demands, Q,T,hmax,temperature,len_taboo):
         x1, sol1, probs = shake(sol, routes, points, demands, Q, mode,destruction_prob,probs)
 
 
-        x2,sol2 = first_improvement2(sol1,x1,points,demands,Q,hmax)
+        x2,sol2 = first_improvement(sol1,x1,points,demands,Q,hmax)
 
         feasible,_,_ = inst.constraints(x2,demands,Q)
         if sol2 - sol < 0 and feasible == True:
@@ -446,7 +581,7 @@ def IVNS(routes,sol,points,demands, Q,T,hmax,len_taboo):
         x1, sol1, probs = shake2(sol, routes, points, demands, Q, mode,perturb=0,probs=probs)
 
 
-        x2,sol2 = first_improvement2(sol1,x1,points,demands,Q,hmax)
+        x2,sol2 = improvement2(sol1,x1,points,demands,Q,hmax)
 
         feasible,_,_ = inst.constraints(x2,demands,Q)
         if sol2 - sol < 0 and feasible == True:
