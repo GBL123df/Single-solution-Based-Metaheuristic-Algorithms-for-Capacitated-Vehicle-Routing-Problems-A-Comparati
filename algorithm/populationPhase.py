@@ -21,8 +21,7 @@ def perturbation(routes1,routes2,points,demands,Q,route,node_idx):
                 node_other = routes1[position[0]][position[1]]
                 candidate_routes[position[0]][position[1]] = node_val
                 candidate_routes[route][node_idx] = node_other
-                val = dist(points[routes1[route]]) + dist(points[routes1[position[0]]]) \
-                       - dist(points[candidate_routes[route]]) - dist(candidate_routes[routes1[position[0]]])
+                val = dist(points[routes1[route]]) + dist(points[routes1[position[0]]]) - dist(points[candidate_routes[route]]) - dist(candidate_routes[routes1[position[0]]])
                 if val <= 0:
                     return candidate_routes,position
     return routes1, position
@@ -32,7 +31,7 @@ def crossover(sol1,routes1,routes2,points,demands,Q,CR):
     positions = []
     for i,r in enumerate(routes2):
         for j,n in enumerate(r[1:-1]):
-            if np.any(positions == [i, j]):
+            if positions[:][0] == i and positions[:][1] == j:
                 continue
             if np.random.rand() < CR:
                 candidate_routes,position = perturbation(candidate_routes,routes2,points,demands,Q,i,j)

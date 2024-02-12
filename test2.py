@@ -306,7 +306,7 @@ class TestBenchmarking(unittest.TestCase):
         file6 = os.path.join(self.path, file6)
         file7 = os.path.join(self.path, file7)
 
-        instance = inst.create_instance_from_file(file2)
+        instance = inst.create_instance_from_file(file)
         t1 = pfc()
         labels, _, C = clust.DBCVRI(instance.maps, instance.demands, instance.v_capacities)
         startRoutes,sol_start = cvns.first_route(instance.maps,labels,C)
