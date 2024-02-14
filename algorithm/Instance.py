@@ -26,9 +26,9 @@ class Instance:
         distance_matrix = pairwise_distances.reshape(num_points, num_points)
         return distance_matrix
 
-    def compute_sol(self,T,hmax,temperature,len_taboo,start,mode):
+    def compute_sol(self,T,hmax,temperature,len_taboo,start,mode,improvement):
         t1 = pfc()
-        solution = CluVNS(self.maps,self.demands,self.v_capacities,T,hmax,temperature,len_taboo,start,mode)
+        solution = CluVNS(self.maps,self.demands,self.v_capacities,T,hmax,temperature,len_taboo,start,mode,improvement)
         t2 = pfc()
         return Solution(routes=solution[0],value=solution[1],time_execution= t2 - t1,maps = self.maps, demands = self.demands, v_capacities = self.v_capacities)
 

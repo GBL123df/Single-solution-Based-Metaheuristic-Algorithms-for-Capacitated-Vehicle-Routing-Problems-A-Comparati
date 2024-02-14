@@ -157,7 +157,6 @@ def improvement3(sol, routes, points, demands, Q, hmax,first):
     new_sol = sol.copy()
     best_routes = routes.copy()
     # Divide hmax in due parti uguali per le due fasi
-
     # Fase di diversificazione
     for neigh_struct in diversification:
         h = 0
@@ -273,7 +272,7 @@ def improvement3bis(sol, routes, points, demands, Q, hmax,first):
 #
 #     if difference >= 0:
 #         return routes,sol
-def improvement1(sol, routes, points, demands, Q, hmax,mode):
+def improvement1(sol, routes, points, demands, Q, hmax,first):
     difference = np.inf
     n_str = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
 
@@ -310,7 +309,7 @@ def improvement1(sol, routes, points, demands, Q, hmax,mode):
         return routes,sol
 
 
-def improvement1bis(sol, routes, points, demands, Q, hmax,mode):
+def improvement1bis(sol, routes, points, demands, Q, hmax,first):
     difference = np.inf
     n_str = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
 
@@ -347,7 +346,6 @@ def improve(sol,routes,points,demands,Q,hmax,first,mode):
         '2bis': improvement2bis,
         '3': improvement3,
         '3bis': improvement3bis
-
     }
     funzione = modes.get(mode)
     new_routes,new_sol = funzione(sol, routes, points, demands, Q, hmax,first)

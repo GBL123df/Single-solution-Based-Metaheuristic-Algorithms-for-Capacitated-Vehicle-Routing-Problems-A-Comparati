@@ -274,13 +274,16 @@ def solve_cvrp(data, first_solution_strategy, local_search_metaheuristic, time_l
     else:
 
         solution = routing.SolveWithParameters(search_parameters)
-    fresh_routes = get_routes(solution, routing, manager)
+    if solution:
+        fresh_routes = get_routes(solution, routing, manager)
 
     # Print solution on console.
-    routes = []
-    for r in fresh_routes:
-        if len(r) > 2:
-            route = np.array(r, dtype=int)
-            routes.append(route)
-    val = print_solution(data, manager, routing, solution)
-    return solution,routes,val,routing
+        routes = []
+        for r in fresh_routes:
+            if len(r) > 2:
+                route = np.array(r, dtype=int)
+                routes.append(route)
+        val = print_solution(data, manager, routing, solution)
+        return solution,routes,val,routing
+    else:
+        return None,None,None,routing

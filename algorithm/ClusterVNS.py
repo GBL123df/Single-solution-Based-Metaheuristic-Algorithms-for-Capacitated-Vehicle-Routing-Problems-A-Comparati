@@ -164,7 +164,7 @@ def equalSol(couple1,couple2):
         else: return False
 
 
-def VNS(routes,sol,points,demands, Q,T,hmax,temperature,len_taboo):
+def VNS(routes,sol,points,demands, Q,T,hmax,temperature,len_taboo,improvement):
 
     taboo = []
 
@@ -182,7 +182,7 @@ def VNS(routes,sol,points,demands, Q,T,hmax,temperature,len_taboo):
         x1, sol1, probs = shake(sol, routes, points, demands, Q, mode,destruction_prob,probs)
 
 
-        x2,sol2 = imp.improve(sol1,x1,points,demands,Q,hmax,'first',mode='1bis')
+        x2,sol2 = imp.improve(sol1,x1,points,demands,Q,hmax,first = improvement[1],mode = improvement[0])
 
         feasible,_,_ = inst.constraints(x2,demands,Q)
         if sol2 - sol < 0 and feasible == True:
@@ -211,7 +211,7 @@ def VNS(routes,sol,points,demands, Q,T,hmax,temperature,len_taboo):
         return routes,sol
 
 
-def IVNS(routes,sol,points,demands, Q,T,hmax,len_taboo):
+def IVNS(routes,sol,points,demands, Q,T,hmax,len_taboo,improvement):
     taboo = []
     t = 0
     probs = np.ones(19)/19
@@ -224,7 +224,7 @@ def IVNS(routes,sol,points,demands, Q,T,hmax,len_taboo):
         x1, sol1, probs = shake2(sol, routes, points, demands, Q, mode,perturb=0,probs=probs)
 
 
-        x2,sol2 = imp.improve(sol1,x1,points,demands,Q,hmax,first = False,mode = '3')
+        x2,sol2 = imp.improve(sol1,x1,points,demands,Q,hmax,first = improvement[1],mode = improvement[0])
 
         feasible,_,_ = inst.constraints(x2,demands,Q)
         if sol2 - sol < 0 and feasible == True:
@@ -256,7 +256,7 @@ def IVNS(routes,sol,points,demands, Q,T,hmax,len_taboo):
 
 
 
-def CluVNS(points,demands, Q,T,hmax,temperature,len_taboo,start,mode):
+def CluVNS(points,demands, Q,T,hmax,temperature,len_taboo,start,mode,improvement):
     routes = []
     sol = np.inf
     if start == 1:
@@ -265,9 +265,9 @@ def CluVNS(points,demands, Q,T,hmax,temperature,len_taboo,start,mode):
     elif start == 2:
         routes, sol = swa.sweep(points,demands, Q)
     if mode == 1:
-        routes, sol = VNS(routes, sol, points, demands, Q, T, hmax, temperature, len_taboo)
+        routes, sol = VNS(routes, sol, points, demands, Q, T, hmax, temperature, len_taboo,improvement)
     elif mode == 2:
-        routes, sol = IVNS(routes, sol, points, demands, Q, T, hmax, len_taboo)
+        routes, sol = IVNS(routes, sol, points, demands, Q, T, hmax, len_taboo,improvement)
     return routes,sol
 
 
