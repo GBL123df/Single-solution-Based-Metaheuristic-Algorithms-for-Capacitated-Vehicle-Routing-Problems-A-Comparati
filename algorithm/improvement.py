@@ -6,7 +6,9 @@ from algorithm import clustering as clust
 from algorithm import heuristics as hrst
 from algorithm import destroyRepair as dstrp
 
-
+#diviso in due fasi diversification e intensification
+#per hmax volte esploro uno alla volta i ogni tipo di vicinato
+#l'esplorazione continua anche se il valore della soluzione diminuisce
 def improvement2(sol, routes, points, demands, Q, hmax,first):
     difference = np.inf
     # diversification = np.array([1, 3, 5, 6, 9, 10])
@@ -82,6 +84,9 @@ def improvement2(sol, routes, points, demands, Q, hmax,first):
     else:
         return routes, sol
 
+#diviso in due fasi diversification e intensification
+#per hmax volte esploro uno alla volta i ogni tipo di vicinato
+#l'esplorazione viene fatta per ogni valore di h partendo sempre dalla stessa soluzione
 def improvement2bis(sol, routes, points, demands, Q, hmax,first):
     difference = np.inf
     # diversification = np.array([1, 3, 5, 6, 9, 10])
@@ -146,6 +151,9 @@ def improvement2bis(sol, routes, points, demands, Q, hmax,first):
     else:
         return routes, sol
 
+#diviso in due fasi diversification e intensification
+#per ogni vicinato ripeto l'esplorazione hmax volte
+#l'esplorazione continua anche se il valore della soluzione diminuisce
 def improvement3(sol, routes, points, demands, Q, hmax,first):
     difference = np.inf
     # diversification = np.array([1, 3, 5, 6, 9, 10])
@@ -165,10 +173,11 @@ def improvement3(sol, routes, points, demands, Q, hmax,first):
 
             if difference < 0:
                 new_sol += difference
-                best_solution = new_sol.copy()
-                best_routes = new_routes.copy()
-                if first:
-                    break
+                if difference < best_solution:
+                    best_solution = new_sol.copy()
+                    best_routes = new_routes.copy()
+                    if first:
+                        break
                 #     continue
             h+=1
     new_sol = best_solution
@@ -193,6 +202,9 @@ def improvement3(sol, routes, points, demands, Q, hmax,first):
     else:
         return routes, sol
 
+#diviso in due fasi diversification e intensification
+#per hmax volte esploro uno alla volta i ogni tipo di vicinato
+#l'esplorazione continua anche se il valore della soluzione diminuisce
 def improvement3bis(sol, routes, points, demands, Q, hmax,first):
     difference = np.inf
     # diversification = np.array([1, 3, 5, 6, 9, 10])
@@ -212,14 +224,16 @@ def improvement3bis(sol, routes, points, demands, Q, hmax,first):
             new_routes, difference = hrst.neighbour_improvement(neigh_struct, routes, points, demands, Q)
 
             if difference < 0:
-                new_sol += difference
-                best_solution = new_sol.copy()
-                best_routes = new_routes.copy()
+                new_sol = sol + difference
+                if new_sol < best_solution:
+                    best_solution = new_sol.copy()
+                    best_routes = new_routes.copy()
                 if first:
                     break
                 #     continue
             h+=1
     diverse_routes = best_routes.copy()
+    diverse_sol = best_solution.copy()
     new_sol = best_solution
     # Fase di intensificazione
     for neigh_struct in intensification:
@@ -227,8 +241,8 @@ def improvement3bis(sol, routes, points, demands, Q, hmax,first):
         while h < hmax:
             new_routes, difference = hrst.neighbour_improvement(neigh_struct, diverse_routes, points, demands, Q)
             if difference < 0:
-                new_sol +=  difference
-                if difference < best_solution:
+                new_sol =  diverse_sol + difference
+                if new_sol < best_solution:
                     best_solution = new_sol.copy()
                     best_routes = new_routes.copy()
                     if first:
@@ -272,6 +286,9 @@ def improvement3bis(sol, routes, points, demands, Q, hmax,first):
 #
 #     if difference >= 0:
 #         return routes,sol
+
+#stessa cosa degli altri casi, unica differenza è chè c'è un'unica fase di esplorazione del vicinato
+
 def improvement1(sol, routes, points, demands, Q, hmax,first):
     difference = np.inf
     n_str = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
@@ -307,6 +324,7 @@ def improvement1(sol, routes, points, demands, Q, hmax,first):
         return best_routes,best_solution
     else:
         return routes,sol
+
 
 
 def improvement1bis(sol, routes, points, demands, Q, hmax,first):

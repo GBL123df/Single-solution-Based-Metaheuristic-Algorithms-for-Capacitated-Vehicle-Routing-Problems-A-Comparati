@@ -123,11 +123,11 @@ class TestBenchmarking(unittest.TestCase):
 
 
     def testtestAlgorithms(self):
-        #par = [10, 2, 20, 10, 2, 2,('2', True)]
-        par = [routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC,2,[]]
+        par = [10, 2, 20, 10, 2, 2,('2', True)]
+        #par = [routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC,2,[]]
         test = testAlgorithms(self.file)
-        # kind = 'solver'
-        kind = 'orTools'
+        kind = 'solver'
+        #kind = 'orTools'
         test.executeTest(kind = kind,par = par,reps=5)
         for t in test.result:
             print(t.value)
