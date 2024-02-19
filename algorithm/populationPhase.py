@@ -5,7 +5,7 @@ from algorithm import Instance as inst
 from algorithm.heuristics import dist
 def perturbation(routes1,routes2,points,demands,Q,route,node_idx):
     position = None
-    if routes1[route][node_idx] and routes2[route][node_idx] and routes1[route][node_idx] != routes2[route][node_idx]:
+    if len(routes1[route][:-1] <= node_idx) and routes1[route][node_idx] != routes2[route][node_idx]:
         to_be_swapped = routes2[route][node_idx]
         node_val = routes1[route][node_idx]
         for i,r in enumerate(routes1):
@@ -21,7 +21,8 @@ def perturbation(routes1,routes2,points,demands,Q,route,node_idx):
                 node_other = routes1[position[0]][position[1]]
                 candidate_routes[position[0]][position[1]] = node_val
                 candidate_routes[route][node_idx] = node_other
-                val = dist(points[routes1[route]]) + dist(points[routes1[position[0]]]) - dist(points[candidate_routes[route]]) - dist(candidate_routes[routes1[position[0]]])
+                val = dist(points[routes1[route]]) + dist(points[routes1[position[0]]]) \
+                      - dist(points[candidate_routes[route]]) - dist(points[candidate_routes[position[0]]])
                 if val <= 0:
                     return candidate_routes,position
     return routes1, position
@@ -31,8 +32,14 @@ def crossover(sol1,routes1,routes2,points,demands,Q,CR):
     positions = []
     for i,r in enumerate(routes2):
         for j,n in enumerate(r[1:-1]):
-            if positions[:][0] == i and positions[:][1] == j:
-                continue
+            if len(positions) > 0:
+                stop = False
+                for pos in positions:
+                    if np.any(pos[:][0] == i) and np.any(pos[:][1] == j):
+                        stop = True
+                        break
+                if stop:
+                    continue
             if np.random.rand() < CR:
                 candidate_routes,position = perturbation(candidate_routes,routes2,points,demands,Q,i,j)
                 if position is not None:

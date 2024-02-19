@@ -1,4 +1,5 @@
 import numpy as np
+import random
 from algorithm import Instance as inst
 import matplotlib.pyplot as plt
 import time
@@ -185,3 +186,45 @@ def DBCVRI(points,demands,Q): #Density based clustering for vehicle routing init
 # plt.pause(30)
 # #print( "\n" , sum( labels == 30))
 
+
+
+def generate_clusters(points, demands, capacity):
+    points_matrix = points[1:]
+    num_points = len(points_matrix) - 1
+    clusters = []
+    labels = np.zeros(num_points, dtype=int)
+    remaining_indices = list(range(num_points))
+
+    # Creazione di una lista dei punti con le rispettive domande
+    points_with_demands = list(zip(points_matrix, demands))
+
+    # Inizializzazione di un nuovo cluster
+    current_cluster = []
+    current_capacity = 0
+    cluster_label = 0
+
+    while remaining_indices:
+        # Seleziona casualmente un indice tra quelli rimasti
+        random_index = random.choice(remaining_indices)
+        point, demand = points_with_demands[random_index]
+
+        # Se aggiungere questo punto non supera la capacità massima, aggiungilo al cluster corrente
+        if current_capacity + demand <= capacity:
+            current_cluster.append(point)
+            current_capacity += demand
+            labels[random_index] = cluster_label
+            remaining_indices.remove(random_index)
+        else:
+            # Aggiungi il cluster corrente alla lista dei cluster
+            clusters.append(current_cluster)
+            # Inizia un nuovo cluster con il punto corrente
+            current_cluster = [point]
+            current_capacity = demand
+            cluster_label += 1
+            labels[random_index] = cluster_label
+            remaining_indices.remove(random_index)
+
+    # Aggiungi l'ultimo cluster alla lista dei cluster
+    clusters.append(current_cluster)
+
+    return labels,clusters

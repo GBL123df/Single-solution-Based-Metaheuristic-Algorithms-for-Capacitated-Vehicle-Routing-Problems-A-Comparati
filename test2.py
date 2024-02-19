@@ -306,7 +306,7 @@ class TestBenchmarking(unittest.TestCase):
         file6 = os.path.join(self.path, file6)
         file7 = os.path.join(self.path, file7)
 
-        instance = inst.create_instance_from_file(file2)
+        instance = inst.create_instance_from_file(file)
         t1 = pfc()
         labels, _, C = clust.DBCVRI(instance.maps, instance.demands, instance.v_capacities)
         startRoutes,sol_start = cvns.first_route(instance.maps,labels,C)
@@ -316,7 +316,7 @@ class TestBenchmarking(unittest.TestCase):
         t2 = pfc()
 
         t3 = pfc()
-        solution = instance.compute_sol(T=50, hmax=2,temperature=20,len_taboo=10,start = 2,mode=2,improvement = ('3',True))
+        solution = instance.compute_sol(T=10, hmax=10,temperature=100,len_taboo=5,start = 2,mode=2,improvement = ('3bis',False),cross_over = False)
         t4 = pfc()
         print("\nval= \n",solution.value,"\n")
         feasible = solution.constraints()
@@ -325,8 +325,12 @@ class TestBenchmarking(unittest.TestCase):
         time_ortools = t2-t1
         time_cvns = t4-t3
         distance_total = inst.total_euclidean_distance(solution.routes,solution.maps)
-        self.assertGreaterEqual(0.001*distance_total,abs(solution.value-distance_total),"case1")
+        # self.assertGreaterEqual(0.001*distance_total,abs(solution.value-distance_total),"case1")
+        self.assertGreaterEqual(0.1,abs(solution.value-distance_total),"case1")
+        # self.assertEqual(distance_total,solution.value,"case1")
         self.assertGreaterEqual(0.1 * distance_total, abs(solution.value - sol.value),"case2")
+
+
 if __name__ == '__main__':
     unittest.main()
     test_suite = unittest.TestLoader().loadTestsFromTestCase(TestBenchmarking)

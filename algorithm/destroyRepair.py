@@ -249,7 +249,7 @@ from algorithm import heuristics as hrst
 def random_client_removal(routes, points, demands, Q):
     routes_trunk = [route[1:-1] for route in routes]
     monoroute = np.concatenate(routes_trunk)
-    N_points = np.random.randint(1, len(monoroute)//3)
+    N_points = np.random.randint(1, len(monoroute))
     remove = np.random.choice(monoroute, size=N_points, replace=False)
     candidateRoutes = []
     for r in routes:
@@ -304,7 +304,7 @@ def zone_removal(routes, points, demands, Q):
 def prox_based_removal(routes, points, demands, Q):
     routes_trunk = [route[1:-1] for route in routes]
     monoroute = np.concatenate(routes_trunk)
-    N_points = np.random.randint(1,np.size(monoroute, axis=0)//3)  # eventualmente modificare questo criterio di scelta
+    N_points = np.random.randint(1,np.size(monoroute, axis=0))  # eventualmente modificare questo criterio di scelta
     toBeRemoved = np.random.choice(monoroute,size=N_points,replace=False)
     remove = toBeRemoved.copy()
     for p in toBeRemoved:
@@ -842,13 +842,15 @@ def repair(removed,routes, points, demands, Q):
     feasible = True
     routesMod = routes.copy()
     while np.size(remotion) > 0 and feasible == True:
-        movement = np.random.choice(np.arange(1,3))
+        movement = np.random.choice(np.arange(0,4))
         if movement == 0:#ricontrollare elementi loop
             routesNew, remotion = greedy_insertion(remotion,routesMod, points, demands, Q)
         if movement == 1:#ricontrollare inserimenti e rimozioni
             routesNew, remotion = fast_greedy_insertion(remotion,routesMod, points, demands, Q)
         if movement == 2:#ricontrollare inserimenti e rimozioni
              routesNew, remotion = random_insertion(remotion,routesMod, points, demands, Q)
+        if movement == 3:  # ricontrollare inserimenti e rimozioni
+            routesNew, remotion = newRoute_Insertion(remotion, routesMod, points, demands, Q)
         feasible,routesNew, _ = inst.constraints(routesNew,demands,Q)
         routes_trunk = [route[1:-1] for route in routesNew]
         monoRoute = np.hstack(routes_trunk)
