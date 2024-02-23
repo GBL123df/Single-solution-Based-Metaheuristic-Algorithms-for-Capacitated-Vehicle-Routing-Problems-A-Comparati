@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import time
 from time import perf_counter as pfc
@@ -252,7 +254,7 @@ def random_client_removal(routes, points, demands, Q):
     N_points = np.random.randint(1, len(monoroute))
     remove = np.random.choice(monoroute, size=N_points, replace=False)
     candidateRoutes = []
-    for r in routes:
+    for r in routes_trunk:
         route = []
         route.append(0)
         for v in r:
@@ -287,7 +289,7 @@ def zone_removal(routes, points, demands, Q):
     N_points = np.random.randint(1,np.size(preBeRemoved))
     remove = np.random.choice(preBeRemoved,N_points,replace= False)
     candidateRoutes = []
-    for r in routes:
+    for r in routes_trunk:
         route = []
         route.append(0)
         for v in r:
@@ -305,7 +307,7 @@ def prox_based_removal(routes, points, demands, Q):
     routes_trunk = [route[1:-1] for route in routes]
     monoroute = np.concatenate(routes_trunk)
     N_points = np.random.randint(1,np.size(monoroute, axis=0))  # eventualmente modificare questo criterio di scelta
-    toBeRemoved = np.random.choice(monoroute,size=N_points,replace=False)
+    toBeRemoved = np.random.choice(monoroute,size=N_points//2,replace=False)
     remove = toBeRemoved.copy()
     for p in toBeRemoved:
         for r in routes_trunk:
@@ -320,7 +322,7 @@ def prox_based_removal(routes, points, demands, Q):
                             p2 = r[i + np.random.choice([1,-1])]
                         remove = np.append(remove,p2)
     candidateRoutes = []
-    for r in routes:
+    for r in routes_trunk:
         route = []
         route.append(0)
         for v in r:
@@ -336,7 +338,7 @@ def prox_based_removal(routes, points, demands, Q):
 
 def random_route_removal(routes, points, demands, Q):
     route_ind = np.random.randint(0,len(routes))
-    remove = routes[route_ind]
+    remove = routes[route_ind][1:-1]
     candidate_routes = []
     for i,r in enumerate(routes):
         if i != route_ind:
@@ -346,13 +348,13 @@ def random_route_removal(routes, points, demands, Q):
 def destroy(routes, points, demands, Q): #, N):
     # i = 1
     total = np.size(points,axis=0)
-    toBeRemoved = np.array([])
+    # toBeRemoved = np.array([])
     candidateRoutes = routes.copy()
     # routes_trunk = [route[1:-1] for route in candidateRoutes]
     # monoRoute = np.hstack(routes_trunk)
     # firstMonoRoute = monoRoute.copy()
     # while i <= N and np.size(monoRoute) > np.size(firstMonoRoute)//2:
-    movement = np.random.choice(np.arange(4))
+    movement = np.random.choice(np.arange(3))
     if movement == 0:
         candidateRoutes, tBR = random_client_removal(routes, points, demands, Q)
     if movement == 1:
@@ -361,12 +363,12 @@ def destroy(routes, points, demands, Q): #, N):
         candidateRoutes, tBR = prox_based_removal(routes, points, demands, Q)
     if movement == 3:
         candidateRoutes, tBR = random_route_removal(routes,points,demands,Q)
-    toBeRemoved = np.concatenate((toBeRemoved, tBR))
+    # toBeRemoved = np.concatenate((toBeRemoved, tBR))
     routes_trunk = [route[1:-1] for route in candidateRoutes]
     monoRoute = np.hstack(routes_trunk)
-    val = np.size(np.concatenate([monoRoute, toBeRemoved]))
+    val = np.size(np.concatenate([monoRoute, tBR]))
     while val != total - 1 :
-        toBeRemoved = np.array([])
+        # toBeRemoved = np.array([])
         candidateRoutes = routes.copy()
         movement = np.random.choice(np.arange(3))
         if movement == 0:
@@ -375,11 +377,14 @@ def destroy(routes, points, demands, Q): #, N):
             candidateRoutes, tBR = zone_removal(routes, points, demands, Q)
         if movement == 2:
             candidateRoutes, tBR = prox_based_removal(routes, points, demands, Q)
-        toBeRemoved = np.concatenate((toBeRemoved,tBR))
+        if movement == 3:
+            candidateRoutes, tBR = random_route_removal(routes, points, demands, Q)
+        # toBeRemoved = np.concatenate([toBeRemoved,tBR])
+
         routes_trunk = [route[1:-1] for route in candidateRoutes]
         monoRoute = np.hstack(routes_trunk)
-        val = np.size(np.concatenate([monoRoute, toBeRemoved]))
-    toBeRemoved = np.array(toBeRemoved,dtype=int)
+        val = np.size(np.concatenate([monoRoute, tBR]))
+    toBeRemoved = np.array(tBR,dtype=int)
     return candidateRoutes,toBeRemoved
 
 ####REPAIR#####
@@ -832,32 +837,53 @@ def find_best_position(route,points,index):
 
 
 
-def random_insertion(removed,routes, points, demands, Q):
+def random_greedy_insertion(removed,routes, points, demands, Q):
     candidate_routes = routes.copy()
-    route_indexes = np.shuffle(np.arange(len(routes)))
-    for i in route_indexes :
-        r = routes[i]
-        capacity_current = np.sum(demands[r])
-        randomIdx = np.random.choice(removed)
-        dem = demands[randomIdx]
-        while capacity_current + dem <= Q and removed:
-            r = find_best_position(r,points,randomIdx)
-            removed = np.delete(removed,np.where(removed == randomIdx)[0])
-            capacity_current += dem
-            if len(removed) > 0:
-                randomIdx = np.random.choice(removed)
-                dem = demands[randomIdx]
-        candidate_routes[i] = r
+    route_indexes = random.shuffle(np.arange(len(routes)))
+    if route_indexes:
+        for i in route_indexes :
+            r = routes[i]
+            capacity_current = np.sum(demands[r])
+            randomIdx = np.random.choice(removed)
+            dem = demands[randomIdx]
+            while capacity_current + dem <= Q and removed:
+                r = find_best_position(r,points,randomIdx)
+                removed = np.delete(removed,np.where(removed == randomIdx)[0])
+                capacity_current += dem
+                if len(removed) > 0:
+                    randomIdx = np.random.choice(removed)
+                    dem = demands[randomIdx]
+            candidate_routes[i] = r
     return candidate_routes,removed
 
 
-
+def random_insertion(removed,routes, points, demands, Q):
+    candidate_routes = routes.copy()
+    route_indexes = random.shuffle(np.arange(len(routes)))
+    if route_indexes:
+        for i in route_indexes :
+            r = routes[i]
+            capacity_current = np.sum(demands[r])
+            randomIdx = np.random.choice(removed)
+            dem = demands[randomIdx]
+            while capacity_current + dem <= Q and removed:
+                r = np.insert(r,-1,randomIdx)
+                removed = np.delete(removed,np.where(removed == randomIdx)[0])
+                capacity_current += dem
+                if len(removed) > 0:
+                    randomIdx = np.random.choice(removed)
+                    dem = demands[randomIdx]
+            candidate_routes[i] = r
+    return candidate_routes,removed
 
 
 def newRoute_Insertion(removed,routes, points, demands, Q):
     candidateRoutes = routes.copy()
     newRoute = [0]
-    N = np.random.randint(1,len(removed))
+    if len(removed) > 1:
+        N = np.random.randint(1,len(removed))
+    else:
+        N = 1
     n = 0
     yet_ins = []
     while n < N and len(np.setdiff1d(removed,yet_ins)) > 0 and np.sum(demands[newRoute]) + min(demands[np.setdiff1d(removed,yet_ins)])<= Q:
@@ -876,22 +902,28 @@ def repair(removed,routes, points, demands, Q):
     total = np.size(points,axis=0)
     remotion = removed.copy()
     feasible = True
+    routes_trunk = [route[1:-1] for route in routes]
+    monoRoute = np.hstack(routes_trunk)
     routesMod = routes.copy()
-    while np.size(remotion) > 0 and feasible == True:
-        movement = np.random.choice(np.arange(0,4))
+    remotionMod = remotion.copy()
+    while np.size(remotionMod) > 0 and feasible == True:
+        movement = np.random.choice(np.arange(2,5))
         if movement == 0:#ricontrollare elementi loop
-            routesNew, remotion = greedy_insertion(remotion,routesMod, points, demands, Q)
+            routesNew, remotion = greedy_insertion(remotionMod,routesMod, points, demands, Q)
         if movement == 1:#ricontrollare inserimenti e rimozioni
-            routesNew, remotion = fast_greedy_insertion(remotion,routesMod, points, demands, Q)
+            routesNew, remotion = fast_greedy_insertion(remotionMod,routesMod, points, demands, Q)
         if movement == 2:#ricontrollare inserimenti e rimozioni
-             routesNew, remotion = random_insertion(remotion,routesMod, points, demands, Q)
+             routesNew, remotion = random_insertion(remotionMod,routesMod, points, demands, Q)
         if movement == 3:  # ricontrollare inserimenti e rimozioni
-            routesNew, remotion = newRoute_Insertion(remotion, routesMod, points, demands, Q)
+            routesNew, remotion = random_greedy_insertion(remotionMod, routesMod, points, demands, Q)
+        if movement == 4:  # ricontrollare inserimenti e rimozioni
+            routesNew, remotion = newRoute_Insertion(remotionMod, routesMod, points, demands, Q)
         feasible,routesNew, _ = inst.constraints(routesNew,demands,Q)
         routes_trunk = [route[1:-1] for route in routesNew]
         monoRoute = np.hstack(routes_trunk)
-        if feasible and np.size(np.concatenate([monoRoute, remotion])) != total - 1:
+        if feasible and np.size(np.concatenate([monoRoute, remotion])) == total - 1:
             routesMod = routesNew.copy()
+            remotionMod = remotion.copy()
     # if not feasible:
     #     return routes
     # else:
@@ -900,6 +932,8 @@ def repair(removed,routes, points, demands, Q):
 
 def destroyAndRepair(routes,sol, points, demands, Q): #, N):
     new_routes, removed = destroy(routes, points, demands, Q) #, N)
+    while len(removed) == 0:
+        new_routes, removed = destroy(routes, points, demands, Q)  # , N)
     new_routes = repair(removed, new_routes, points, demands,Q)
     routes_hpstack = np.unique(np.hstack([route[1:-1] for route in routes]))
     new_routes_hpstack = np.unique(np.hstack([route[1:-1] for route in routes]))

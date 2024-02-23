@@ -169,31 +169,38 @@ def VNS2(routes,sol,points,demands, Q,T,hmax,temperature,len_taboo,improvement,c
     while t < T:
 
         mode = 'cocktail'
-        # destruction_prob = np.exp(-pow((5/2*t/T - 0.8325546111576977),2))
+        l = 0
 
         x1, sol1, probs = shk.shake2(sol, routes, points, demands, Q, mode,1,probs)
 
+        x2, sol2 = imp.improve(sol1, x1, points, demands, Q, hmax, first=improvement[1], mode=improvement[0])
+        feasible, _, _ = inst.constraints(x2, demands, Q)
 
-
-        x2,sol2 = imp.improve(sol1,x1,points,demands,Q,hmax,first = improvement[1],mode = improvement[0])
-
-        feasible,_,_ = inst.constraints(x2,demands,Q)
         if sol2 - sol < 0 and feasible == True:
             routes = x2
             sol = sol2
-            taboo.append((routes,sol))
-            if len(taboo) == len_taboo and t < T-1 and cross_over:
-                routes,sol = pph.mixing(taboo,points,demands,Q,annealing_prob)
-        elif sol2 - sol >= 0 and feasible == True:
-            annealing_prob = np.exp((sol-sol2)/tp)
-            hill_climb = np.random.choice([0,1],p = [1-annealing_prob,annealing_prob])
-            if hill_climb == 1:
-                routes = x1
-                sol = sol1
-
-        t +=1
-        k = np.log(t)
-        tp = temperature * pow(0.8, k)
+            if len(taboo) == len_taboo and t < T - 1 and cross_over:
+                routes, sol = pph.mixing(taboo, points, demands, Q, destruction_prob)
+        if sol2 - sol >= 0 and feasible == True:
+            taboo.append((routes, sol))
+            # annealing_prob = np.exp((sol-sol2)/tp)
+            t += 1
+        while sol2 - sol >= 0:
+            x2, sol2 = imp.improve(sol, routes, points, demands, Q, hmax, first=improvement[1], mode=improvement[0])
+            destruction_prob = np.exp(-pow((5 / 2 * t / T - 0.8325546111576977), 2))
+            feasible,_,_ = inst.constraints(x2,demands,Q)
+            if sol2 - sol < 0 and feasible == True:
+                routes = x2
+                sol = sol2
+                if len(taboo) == len_taboo and t < T-1 and cross_over:
+                    routes,sol = pph.mixing(taboo,points,demands,Q,destruction_prob)
+            elif sol2 - sol >= 0 and feasible == True:
+                taboo.append((routes, sol))
+                # annealing_prob = np.exp((sol-sol2)/tp)
+                t+=1
+                # k = np.log(t)
+                # tp = temperature * pow(0.8, k)
+                break
 
     if taboo:
         vals = [tab[1] for tab in taboo]
