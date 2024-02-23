@@ -428,8 +428,11 @@ def improvement1_1bis(sol, routes, points, demands, Q, hmax,first):
 
 def improvement_choseNeigh(sol, routes, points, demands, Q, hmax,first,kind = 'i'):
     difference = np.inf
+    if kind == 'b':
+        n_str = [6,7,17,18]
     if kind == 'd':
-        n_str = np.array([1, 3, 5, 6, 9, 10, 12, 13, 15])
+        # n_str = np.array([1, 3, 5, 6, 9, 10, 12, 13, 15])
+        n_str = np.array([ 6, 9, 10, 12, 13, 15])
     elif kind == 'i':
         n_str = np.array([0, 2, 4, 7, 8, 11, 14])
     elif kind == 'l':
@@ -443,7 +446,10 @@ def improvement_choseNeigh(sol, routes, points, demands, Q, hmax,first,kind = 'i
 
     for neigh_struct in n_str:
         while h < hmax:
-            new_routes, difference = hrst.neighbour_improvement(neigh_struct, routes, points, demands, Q)
+            if kind == 'b':
+                new_routes, difference = hrst.neighbour(neigh_struct, routes, points, demands, Q)
+            else:
+                new_routes, difference = hrst.neighbour_improvement(neigh_struct, routes, points, demands, Q)
             if difference < 0:
                 new_sol = sol + difference
                 if new_sol < best_solution:

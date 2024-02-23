@@ -1472,28 +1472,29 @@ def merge_routes(routes,points, demands, Q):
     # Trova le due route con la domanda cumulata minore
     min_indices = np.argsort(demands_cumsum)[:2]
     route1, route2 = routes[min_indices[0]], routes[min_indices[1]]
-
+    route_cut1 = route1[1:-1]
+    route_cut2 = route2[1:-1]
     if np.sum(demands_cumsum[:2]) > Q:
         return routes, 0
     # Calcola tutte le possibili combinazioni di merge mantenendo l'integrità delle route
     possible_merges = []
 
     merge_combinations = [
-        np.concatenate([route1[:-1],route2[1:]]),
-        np.concatenate([route1[:-1],np.flip(route2[:-1])]),
-        np.concatenate([np.flip(route1[:-1]), route2[1:]]),
-        np.concatenate([np.flip(route1[:-1]), np.flip(route2[:-1])]),
-        np.concatenate([route2[:-1], route1[1:]]),
-        np.concatenate([route2[:-1], np.flip(route1[1:])]),
-        np.concatenate([np.flip(route2[:-1]), route1[1:]]),
-        np.concatenate([np.flip(route2[:-1]), np.flip(route1[1:])])
+        np.concatenate([[0],route_cut1,route_cut2,[0]]),
+        np.concatenate([[0],route_cut1,np.flip(route_cut2),[0]]),
+        np.concatenate([[0],np.flip(route_cut1), route_cut2,[0]]),
+        np.concatenate([[0],np.flip(route_cut1), np.flip(route_cut2),[0]]),
+        np.concatenate([[0],route_cut2, route_cut1,[0]]),
+        np.concatenate([[0],route_cut2, np.flip(route_cut1),[0]]),
+        np.concatenate([[0],np.flip(route_cut2), route_cut1,[0]]),
+        np.concatenate([[0],np.flip(route_cut2), np.flip(route_cut1),[0]])
     ]
     best_route = []
     best_diff  = np.inf
     d1 = dist(points[route1])
     d2 = dist(points[route2])
     for merged_route in merge_combinations:
-        difference  = dist(points(merged_route)) -d1 -d2
+        difference  = dist(points[merged_route]) -d1 -d2
         if difference < best_diff:
             best_diff = difference
             best_route = merged_route
@@ -1502,7 +1503,7 @@ def merge_routes(routes,points, demands, Q):
     candidate_routes = routes.copy()
     candidate_routes[min_indices[0]] = best_route
     candidate_routes.pop(min_indices[1])
-    feasible, candidate_routes, _ = inst.constraints(candidate_routes, routes, demands, Q)
+    feasible, candidate_routes, _ = inst.constraints(candidate_routes, demands, Q)
     if feasible:
         return candidate_routes, best_diff
     else:

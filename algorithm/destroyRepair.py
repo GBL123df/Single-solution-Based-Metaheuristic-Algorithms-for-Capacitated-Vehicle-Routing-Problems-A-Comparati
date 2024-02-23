@@ -692,131 +692,167 @@ def fast_greedy_insertion(removed, routes, points, demands, Q):
         return routes,removed
 
 
+# def random_insertion(removed,routes, points, demands, Q):
+#     feasible = False
+# #     points = points[1:]
+#     trials = 0
+#     while not feasible and trials < 5:
+#
+#         if len(removed)>1:
+#             N_points = np.random.randint(1,len(removed))
+#         else:N_points=1
+#         if N_points>1:
+#             # toBeInsertedIndices = np.random.choice(len(removed), size=N_points, replace=False)
+#             # toBeInserted = removed[toBeInsertedIndices]
+#             toBeInserted = np.random.choice(removed, size=N_points, replace=False)
+#             notInserted = removed.copy()
+#             notInserted = np.setdiff1d(notInserted,toBeInserted)
+#
+#         else:
+#             toBeInserted = removed[0]
+#             notInserted = np.array([],dtype=int)
+#
+#
+#         candidateRoutes = routes.copy()
+#
+#         if all(np.sum(demands[route]) > Q for route in candidateRoutes):
+#             newroute = []
+#             valSum = Q + 1
+#             whatPts = toBeInserted.copy()
+#             newroute.append(0)
+#             while valSum > Q:
+#                 insert = np.random.randint(1, len(toBeInserted))
+#                 whatPts = np.random.choice(toBeInserted, insert)
+#                 valSum = np.sum(demands[whatPts])
+#             [newroute.append(pt) for pt in whatPts]
+#             newroute.append(0)
+#             newroute = np.array(newroute, dtype=int)
+#             candidateRoutes.append(newroute)
+#             remained = toBeInserted.copy()
+#             for i in newroute:  # modificare perchè sbagliato
+#                 remove = np.where(remained == i)[0]
+#                 remained = np.delete(remained, remove)
+#             notInserted = np.concatenate([notInserted, remained])
+#             return candidateRoutes, np.array(notInserted,dtype=int)
+#
+#         if np.size(toBeInserted) == 1:
+#             p = toBeInserted
+#             if all(np.sum(demands[route] + demands[p]) > Q for route in candidateRoutes):
+#                 if np.isscalar(p):
+#                     newroute = [0, p, 0]
+#                 else:
+#                     newroute = [0, p[0], 0]
+#                 candidateRoutes.append(newroute)
+#                 return candidateRoutes, []
+#             else:
+#                 r_index = np.random.choice(np.arange(len(candidateRoutes)))
+#                 r = candidateRoutes[r_index]
+#                 j = np.random.randint(len(r) - 1)
+#                 vector = np.insert(r, j, p)
+#                 while np.sum(demands[vector]) > Q:
+#                     r_index = np.random.choice(np.arange(len(candidateRoutes)))
+#                     r = candidateRoutes[r_index]
+#                     j = np.random.randint(1,len(r) - 1)
+#                     vector = np.insert(r, j, p)
+#                 candidateRoutes[r_index] = vector
+#                 return candidateRoutes,[]
+#
+#
+#         final_toBeInserted = toBeInserted.copy()
+#         for index,p in enumerate(toBeInserted):
+#             if p == 0:
+#                 continue
+#             if all(np.sum(demands[route]) + demands[p] > Q for route in candidateRoutes):
+#                 probability = np.random.random()
+#                 if probability > 2/3:
+#                     newroute = []
+#                     valSum = Q + 1
+#                     whatPts = toBeInserted.copy()
+#                     newroute.append(0)
+#                     while valSum > Q:
+#                         insert = np.random.randint(1,len(toBeInserted))
+#                         whatPts = np.random.choice(toBeInserted,insert)
+#                         valSum = np.sum(demands[whatPts])
+#                     [newroute.append(pt) for pt in whatPts]
+#                     newroute.append(0)
+#                     newroute = np.array(newroute,dtype=int)
+#                     candidateRoutes.append(newroute)
+#                     remained = toBeInserted.copy()
+#                     for i in newroute:  # si potrebbe togliere questo ciclo con setdiff1d
+#                         remove = np.where(remained == i)[0]
+#                         remained = np.delete(remained, remove)
+#                     notInserted = np.concatenate([notInserted, remained])
+#                     return candidateRoutes, np.array(notInserted,dtype=int)
+#                 else:
+#                     inDel = np.where(final_toBeInserted == p)[0]
+#     #                 inDel = int(inDel)
+#                     inDel = np.array(inDel,dtype=int)
+#                     final_toBeInserted = np.delete(final_toBeInserted,inDel)
+#                     continue
+#
+#             r_index = np.random.choice(np.arange(len(candidateRoutes)))
+#             r = candidateRoutes[r_index]
+#             j = np.random.randint(len(r) - 1)
+#             vector = np.insert(r, j, p)
+#             while np.sum(demands[vector]) > Q:
+#                 r_index = np.random.choice(np.arange(len(candidateRoutes)))
+#                 r = candidateRoutes[r_index]
+#                 j = np.random.randint(1,len(r) - 1)
+#                 vector = np.insert(r, j, p)
+#             candidateRoutes[r_index] = vector
+#             remove = np.where(notInserted == p)[0]
+#             notInserted = np.delete(notInserted, remove)
+#             feasible, candidateRoutes,_ = inst.constraints(candidateRoutes, demands, Q)
+#         remained = toBeInserted.copy()
+#         i = 0
+#         while i < np.size(final_toBeInserted):
+#             where = np.where(final_toBeInserted[i] == remained)[0]
+#             where = np.array(where,dtype=int)
+#             remained = np.delete(remained, where)
+#             i += 1
+#         notInserted = np.concatenate([notInserted, remained])
+#         feasible,_,_ = inst.constraints(candidateRoutes,demands,Q)
+#         trials += 1
+#     if not feasible:
+#         return routes,removed
+#     else:
+#         return candidateRoutes, np.array(notInserted,dtype=int)
+
+def find_best_position(route,points,index):
+    new_route = route.copy()
+    best_cost =np.inf
+    for i in range(1,len(route)-1):
+        new_route = np.insert(route,i,index)
+        new_cost = hrst.dist(points[new_route])
+        if new_cost<best_cost:
+            best_cost = new_cost
+            best_route = new_route
+    return best_route
+
+
+
+
 def random_insertion(removed,routes, points, demands, Q):
-    feasible = False
-#     points = points[1:]
-    trials = 0
-    while not feasible and trials < 5:
-
-        if len(removed)>1:
-            N_points = np.random.randint(1,len(removed))
-        else:N_points=1
-        if N_points>1:
-            # toBeInsertedIndices = np.random.choice(len(removed), size=N_points, replace=False)
-            # toBeInserted = removed[toBeInsertedIndices]
-            toBeInserted = np.random.choice(removed, size=N_points, replace=False)
-            notInserted = removed.copy()
-            notInserted = np.setdiff1d(notInserted,toBeInserted)
-
-        else:
-            toBeInserted = removed[0]
-            notInserted = np.array([],dtype=int)
+    candidate_routes = routes.copy()
+    route_indexes = np.shuffle(np.arange(len(routes)))
+    for i in route_indexes :
+        r = routes[i]
+        capacity_current = np.sum(demands[r])
+        randomIdx = np.random.choice(removed)
+        dem = demands[randomIdx]
+        while capacity_current + dem <= Q and removed:
+            r = find_best_position(r,points,randomIdx)
+            removed = np.delete(removed,np.where(removed == randomIdx)[0])
+            capacity_current += dem
+            if len(removed) > 0:
+                randomIdx = np.random.choice(removed)
+                dem = demands[randomIdx]
+        candidate_routes[i] = r
+    return candidate_routes,removed
 
 
-        candidateRoutes = routes.copy()
-
-        if all(np.sum(demands[route]) > Q for route in candidateRoutes):
-            newroute = []
-            valSum = Q + 1
-            whatPts = toBeInserted.copy()
-            newroute.append(0)
-            while valSum > Q:
-                insert = np.random.randint(1, len(toBeInserted))
-                whatPts = np.random.choice(toBeInserted, insert)
-                valSum = np.sum(demands[whatPts])
-            [newroute.append(pt) for pt in whatPts]
-            newroute.append(0)
-            newroute = np.array(newroute, dtype=int)
-            candidateRoutes.append(newroute)
-            remained = toBeInserted.copy()
-            for i in newroute:  # modificare perchè sbagliato
-                remove = np.where(remained == i)[0]
-                remained = np.delete(remained, remove)
-            notInserted = np.concatenate([notInserted, remained])
-            return candidateRoutes, np.array(notInserted,dtype=int)
-
-        if np.size(toBeInserted) == 1:
-            p = toBeInserted
-            if all(np.sum(demands[route] + demands[p]) > Q for route in candidateRoutes):
-                if np.isscalar(p):
-                    newroute = [0, p, 0]
-                else:
-                    newroute = [0, p[0], 0]
-                candidateRoutes.append(newroute)
-                return candidateRoutes, []
-            else:
-                r_index = np.random.choice(np.arange(len(candidateRoutes)))
-                r = candidateRoutes[r_index]
-                j = np.random.randint(len(r) - 1)
-                vector = np.insert(r, j, p)
-                while np.sum(demands[vector]) > Q:
-                    r_index = np.random.choice(np.arange(len(candidateRoutes)))
-                    r = candidateRoutes[r_index]
-                    j = np.random.randint(1,len(r) - 1)
-                    vector = np.insert(r, j, p)
-                candidateRoutes[r_index] = vector
-                return candidateRoutes,[]
 
 
-        final_toBeInserted = toBeInserted.copy()
-        for index,p in enumerate(toBeInserted):
-            if p == 0:
-                continue
-            if all(np.sum(demands[route]) + demands[p] > Q for route in candidateRoutes):
-                probability = np.random.random()
-                if probability > 2/3:
-                    newroute = []
-                    valSum = Q + 1
-                    whatPts = toBeInserted.copy()
-                    newroute.append(0)
-                    while valSum > Q:
-                        insert = np.random.randint(1,len(toBeInserted))
-                        whatPts = np.random.choice(toBeInserted,insert)
-                        valSum = np.sum(demands[whatPts])
-                    [newroute.append(pt) for pt in whatPts]
-                    newroute.append(0)
-                    newroute = np.array(newroute,dtype=int)
-                    candidateRoutes.append(newroute)
-                    remained = toBeInserted.copy()
-                    for i in newroute:  # si potrebbe togliere questo ciclo con setdiff1d
-                        remove = np.where(remained == i)[0]
-                        remained = np.delete(remained, remove)
-                    notInserted = np.concatenate([notInserted, remained])
-                    return candidateRoutes, np.array(notInserted,dtype=int)
-                else:
-                    inDel = np.where(final_toBeInserted == p)[0]
-    #                 inDel = int(inDel)
-                    inDel = np.array(inDel,dtype=int)
-                    final_toBeInserted = np.delete(final_toBeInserted,inDel)
-                    continue
-
-            r_index = np.random.choice(np.arange(len(candidateRoutes)))
-            r = candidateRoutes[r_index]
-            j = np.random.randint(len(r) - 1)
-            vector = np.insert(r, j, p)
-            while np.sum(demands[vector]) > Q:
-                r_index = np.random.choice(np.arange(len(candidateRoutes)))
-                r = candidateRoutes[r_index]
-                j = np.random.randint(1,len(r) - 1)
-                vector = np.insert(r, j, p)
-            candidateRoutes[r_index] = vector
-            remove = np.where(notInserted == p)[0]
-            notInserted = np.delete(notInserted, remove)
-            feasible, candidateRoutes,_ = inst.constraints(candidateRoutes, demands, Q)
-        remained = toBeInserted.copy()
-        i = 0
-        while i < np.size(final_toBeInserted):
-            where = np.where(final_toBeInserted[i] == remained)[0]
-            where = np.array(where,dtype=int)
-            remained = np.delete(remained, where)
-            i += 1
-        notInserted = np.concatenate([notInserted, remained])
-        feasible,_,_ = inst.constraints(candidateRoutes,demands,Q)
-        trials += 1
-    if not feasible:
-        return routes,removed
-    else:
-        return candidateRoutes, np.array(notInserted,dtype=int)
 
 def newRoute_Insertion(removed,routes, points, demands, Q):
     candidateRoutes = routes.copy()

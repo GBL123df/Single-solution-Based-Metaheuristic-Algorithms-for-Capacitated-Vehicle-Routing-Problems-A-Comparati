@@ -188,15 +188,14 @@ def DBCVRI(points,demands,Q): #Density based clustering for vehicle routing init
 
 
 
-def generate_clusters(points, demands, capacity):
-    points_matrix = points[1:]
+def generate_clusters(points_matrix, demands, capacity):
     num_points = len(points_matrix) - 1
     clusters = []
-    labels = np.zeros(num_points, dtype=int)
+    labels = -np.ones(num_points, dtype=int)
     remaining_indices = list(range(num_points))
 
     # Creazione di una lista dei punti con le rispettive domande
-    points_with_demands = list(zip(points_matrix, demands))
+    # points_with_demands = list(zip(points_matrix, demands))
 
     # Inizializzazione di un nuovo cluster
     current_cluster = []
@@ -206,11 +205,13 @@ def generate_clusters(points, demands, capacity):
     while remaining_indices:
         # Seleziona casualmente un indice tra quelli rimasti
         random_index = random.choice(remaining_indices)
-        point, demand = points_with_demands[random_index]
+        # point, demand = points_with_demands[random_index]
+        # point = points_matrix[random_index]
+        demand = demands[random_index + 1]
 
         # Se aggiungere questo punto non supera la capacità massima, aggiungilo al cluster corrente
         if current_capacity + demand <= capacity:
-            current_cluster.append(point)
+            # current_cluster.append(point)
             current_capacity += demand
             labels[random_index] = cluster_label
             remaining_indices.remove(random_index)
@@ -218,13 +219,91 @@ def generate_clusters(points, demands, capacity):
             # Aggiungi il cluster corrente alla lista dei cluster
             clusters.append(current_cluster)
             # Inizia un nuovo cluster con il punto corrente
-            current_cluster = [point]
+            # current_cluster = [point]
             current_capacity = demand
             cluster_label += 1
             labels[random_index] = cluster_label
             remaining_indices.remove(random_index)
 
     # Aggiungi l'ultimo cluster alla lista dei cluster
-    clusters.append(current_cluster)
+    # clusters.append(current_cluster)
 
-    return labels,clusters
+    return np.array(labels)#,clusters
+
+
+
+
+def generate_zone_clusters(points, demands, capacity):
+    num_points = len(points) - 1
+    labels = -np.ones(num_points, dtype=int)
+    remaining_indices = list(range(num_points))
+
+    cluster_label = 0
+    points_not_visited = points[1:]
+    while remaining_indices:
+        current_capacity = 0
+        center = np.random.choice(remaining_indices)
+        # Continuare simulando i lati (si può scegliere una distribuzione normale con media 0 e
+        # varianza con quella campionaria, dove i campioni nel nostro caso possono essere tutti gli altri punti della mappa
+        distancesAxes = np.abs(points_not_visited - points[center])
+        stdX = np.std(distancesAxes[:, 0])
+        stdY = np.std(distancesAxes[:, 1])
+        avgx= np.average(distancesAxes[:, 0])
+        avgy= np.average(distancesAxes[:, 1])
+        deltaX = np.abs(avgx + np.random.normal(scale=stdX))
+        deltaY = np.abs(avgy + np.random.normal(scale=stdY))
+        preBeAdded = [center]
+        for i in remaining_indices:
+            distance = np.abs(points[i] - points[center])
+            if distance[0] < deltaX and distance[1] < deltaY and i != center:
+                preBeAdded.append(i)
+
+        random_index = random.choice(preBeAdded)
+        demand = demands[random_index + 1]
+        while current_capacity + demand <= capacity and len(preBeAdded)>0 :
+            current_capacity += demand
+            labels[random_index] = cluster_label
+            preBeAdded.remove(random_index)
+            remaining_indices.remove(random_index)
+            if len(preBeAdded) > 0:
+                random_index = random.choice(preBeAdded)
+                demand = demands[random_index + 1]
+        cluster_label+=1
+        points_not_visited = points[remaining_indices]
+    return np.array(labels)#,clusters
+
+def generate_around_clusters(points, demands, capacity):
+    num_points = len(points) - 1
+    labels = -np.ones(num_points, dtype=int)
+    remaining_indices = list(range(num_points))
+
+    cluster_label = 0
+    points_not_visited = points[1:]
+    while remaining_indices:
+        current_capacity = 0
+        center = np.random.choice(remaining_indices)
+        # Continuare simulando i lati (si può scegliere una distribuzione normale con media 0 e
+        # varianza con quella campionaria, dove i campioni nel nostro caso possono essere tutti gli altri punti della mappa
+        distancesAxes = np.linalg.norm(points_not_visited - points[center],axis=1)
+        std = np.std(distancesAxes)
+        avg= np.average(distancesAxes)
+        delta = np.abs(avg + np.random.normal(scale=std))
+        preBeAdded = [center]
+        for i in remaining_indices:
+            distance = np.linalg.norm(points[i] - points[center])
+            if distance < delta and i != center:
+                preBeAdded.append(i)
+
+        random_index = random.choice(preBeAdded)
+        demand = demands[random_index + 1]
+        while current_capacity + demand <= capacity and len(preBeAdded)>0 :
+            current_capacity += demand
+            labels[random_index] = cluster_label
+            preBeAdded.remove(random_index)
+            remaining_indices.remove(random_index)
+            if len(preBeAdded) > 0:
+                random_index = random.choice(preBeAdded)
+                demand = demands[random_index + 1]
+        cluster_label+=1
+        points_not_visited = points[remaining_indices]
+    return np.array(labels)#,clusters

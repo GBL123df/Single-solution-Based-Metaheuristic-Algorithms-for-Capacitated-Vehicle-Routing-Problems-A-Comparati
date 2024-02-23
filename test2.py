@@ -316,7 +316,7 @@ class TestBenchmarking(unittest.TestCase):
         t2 = pfc()
 
         t3 = pfc()
-        solution = instance.compute_sol(T=10, hmax=10,temperature=100,len_taboo=5,start = 2,mode=2,improvement = ('3bis',False),cross_over = False)
+        solution = instance.compute_sol(T=10, hmax=5,temperature=100,len_taboo=5,start = 2,mode=6,improvement = ('3bis',False),cross_over = False)
         t4 = pfc()
         print("\nval= \n",solution.value,"\n")
         feasible = solution.constraints()
