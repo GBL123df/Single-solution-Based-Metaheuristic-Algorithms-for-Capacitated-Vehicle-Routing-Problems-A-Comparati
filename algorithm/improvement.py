@@ -211,13 +211,13 @@ def improvement3(sol, routes, points, demands, Q, hmax,first):
 #l'esplorazione continua anche se il valore della soluzione diminuisce
 def improvement3bis(sol, routes, points, demands, Q, hmax,first):
     difference = np.inf
-    # diversification = np.array([1, 3, 5, 6, 9, 10])
-    # intensification = np.array([0, 2, 4, 7, 8])
+    diversification = np.array([1, 3, 5, 6, 9, 10])
+    intensification = np.array([0, 2, 4, 7, 8])
     # diversification = np.array([1, 3, 5, 6, 9, 10, 12, 13, 15])
-    diversification = np.array([5, 6, 9, 10, 12, 13, 15])
+    #diversification = np.array([5, 6, 9, 10, 12, 13, 15])
     # diversification = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
     # intensification = np.array([0, 2, 4, 7, 8, 11, 14])
-    intensification = np.array([7, 8, 11, 14])
+    #intensification = np.array([7, 8, 11, 14])
     best_solution = sol.copy()  # Soluzione migliore trovata durante la diversificazione
     new_sol = sol.copy()
     best_routes = routes.copy()
@@ -429,12 +429,14 @@ def improvement1_1bis(sol, routes, points, demands, Q, hmax,first):
 def improvement_choseNeigh(sol, routes, points, demands, Q, hmax,first,kind = 'i'):
     difference = np.inf
     if kind == 'b':
-        n_str = [6,7,17,18]
+        n_str = np.array([6,7,17,18])
     if kind == 'd':
         # n_str = np.array([1, 3, 5, 6, 9, 10, 12, 13, 15])
-        n_str = np.array([ 6, 9, 10, 12, 13, 15])
+        n_str = np.array([1, 3, 5, 6, 9, 10])
+        #n_str = np.array([ 6, 9, 10, 12, 13, 15])
     elif kind == 'i':
-        n_str = np.array([0, 2, 4, 7, 8, 11, 14])
+        # n_str = np.array([0, 2, 4, 7, 8, 11, 14])
+        n_str = np.array([0, 2, 4, 7, 8])
     elif kind == 'l':
         n_str = np.array([0, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 18])
 

@@ -4,6 +4,7 @@ from scipy.sparse import csc_matrix
 from algorithm.ClusterVNS import CluVNS
 import matplotlib.pyplot as plt
 from time import perf_counter as pfc
+import algorithm.orToolsSolver as orts
 # from algorithm import orToolsSolver as ortS
 
 class Instance:
@@ -30,10 +31,19 @@ class Instance:
         t1 = pfc()
         solution = CluVNS(self.maps,self.demands,self.v_capacities,T,hmax,temperature,len_taboo,start,mode,improvement,cross_over)
         t2 = pfc()
-        return Solution(routes=solution[0],value=solution[1],time_execution= t2 - t1,maps = self.maps, demands = self.demands, v_capacities = self.v_capacities)
+        feasible,_,_ = constraints(solution[0],self.demands,self.v_capacities)
+        return Solution(routes=solution[0],value=solution[1],time_execution= t2 - t1,maps = self.maps, demands = self.demands, v_capacities = self.v_capacities,feasible=feasible)
 
-
-
+    def compute_ortSol(self,time_execution = np.inf,local_search_metaheuristic = None,
+                 first_solution_strategy = None, time_limit_seconds = None,startRoutes = []):
+        solution = orts.orTSolution(maps = self.maps, demands=self.demands,v_capacities= self.v_capacities,
+                                    local_search_metaheuristic=local_search_metaheuristic, first_solution_strategy=first_solution_strategy,
+                                    time_limit_seconds=time_limit_seconds,startRoutes=startRoutes)
+        t1 = pfc()
+        solution.get_solution()
+        t2 = pfc()
+        feasible, _, _ = constraints(solution.routes, self.demands, self.v_capacities)
+        return  solution
 
     def plot_map(self):
         plot_routes(points=self.maps)

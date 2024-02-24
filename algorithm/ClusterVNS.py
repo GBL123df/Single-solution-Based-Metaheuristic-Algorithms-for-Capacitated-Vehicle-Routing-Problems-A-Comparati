@@ -121,7 +121,7 @@ def VNS(routes,sol,points,demands, Q,T,hmax,temperature,len_taboo,improvement,cr
     probs = np.ones(19)/19
 
     while t < T:
-
+        t0 = pfc()
         mode = 'cocktail'
         destruction_prob = np.exp(-pow((5/2*t/T - 0.8325546111576977),2))
 
@@ -144,7 +144,8 @@ def VNS(routes,sol,points,demands, Q,T,hmax,temperature,len_taboo,improvement,cr
             if hill_climb == 1:
                 routes = x1
                 sol = sol1
-
+        t1 = pfc()
+        print("\nt = ",t,"  time = ", t1 - t0,"\n")
         t +=1
         k = np.log(t)
         tp = temperature * pow(0.8, k)
@@ -167,7 +168,7 @@ def VNS2(routes,sol,points,demands, Q,T,hmax,temperature,len_taboo,improvement,c
     probs = np.ones(19)/19
 
     while t < T:
-
+        t0 = pfc()
         mode = 'cocktail'
         l = 0
 
@@ -201,7 +202,8 @@ def VNS2(routes,sol,points,demands, Q,T,hmax,temperature,len_taboo,improvement,c
                 # k = np.log(t)
                 # tp = temperature * pow(0.8, k)
                 break
-
+        t1 = pfc()
+        print("\nt = ", t, "  time = ", t1 - t0, "\n")
     if taboo:
         vals = [tab[1] for tab in taboo]
         best = np.argmin(vals)

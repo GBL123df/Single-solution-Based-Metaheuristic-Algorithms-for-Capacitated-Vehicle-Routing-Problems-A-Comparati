@@ -3,10 +3,14 @@ from ortools.constraint_solver import pywrapcp
 from ortools.constraint_solver import routing_enums_pb2
 from algorithm import Instance as inst
 from time import perf_counter as pfc
-class orTSolution(inst.Instance):
+class orTSolution():
     def __init__(self, solution = None,value = None, routes = None,feasible = False,time_execution = np.inf,local_search_metaheuristic = None,
                  first_solution_strategy = None, time_limit_seconds = None,startRoutes = [], maps = [], demands = [], v_capacities = 0):
-        super().__init__(maps, demands, v_capacities)
+
+        self.maps = maps  # clients coordinate matrix (2D list or numpy array)
+        self.demands = demands  # List of demands for each customer
+        self.v_capacities = v_capacities  # List of vehicle capacities
+        self.instance = inst.Instance(maps=self.maps,demands= self.demands,v_capacities=self.v_capacities)
         self.routes = routes
         self.solution = solution
         self.value = value
@@ -22,7 +26,7 @@ class orTSolution(inst.Instance):
 
 
     def get_solution(self):
-        data = create_data_model(self)
+        data = create_data_model(self.instance)
         if len(self.startRoutes) == 0:
             t1 = pfc()
             self.solution,self.routes,self.value,_ = solve_cvrp(data,self.first_solution_strategy, self.local_search_metaheuristic,
@@ -36,6 +40,7 @@ class orTSolution(inst.Instance):
                                                                    self.time_limit_seconds, start=True, startRoutes=self.startRoutes)
             t2 = pfc()
             self.time_execution = t2 - t1
+            self.feasible,_,_=self.constraints()
         return self.solution,self.routes,self.value
 
     def constraints(self):

@@ -5,3 +5,5 @@ os
 re
 matplotlib
 scipy
+pandas
+openpyxl
