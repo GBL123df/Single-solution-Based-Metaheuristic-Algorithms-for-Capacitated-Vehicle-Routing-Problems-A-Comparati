@@ -308,10 +308,13 @@ class TestBenchmarking(unittest.TestCase):
         file7 = os.path.join(self.path, file7)
         file8 = os.path.join(self.path, file8)
 
-        instance = inst.create_instance_from_file(file5)
+        instance = inst.create_instance_from_file(file)
         t1 = pfc()
         labels, _, C = clust.DBCVRI(instance.maps, instance.demands, instance.v_capacities)
         startRoutes,sol_start = cvns.first_route(instance.maps,labels,C)
+        sol = instance.compute_ortSol(first_solution_strategy=routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
+                                           local_search_metaheuristic=routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING,
+                                           time_limit_seconds=10)
         sol = ortS.solution_ORTools(instance,first_solution_strategy=routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
                                            local_search_metaheuristic=routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING,
                                            time_limit_seconds=10)

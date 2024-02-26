@@ -29,15 +29,18 @@ class orTSolution():
         data = create_data_model(self.instance)
         if len(self.startRoutes) == 0:
             t1 = pfc()
-            self.solution,self.routes,self.value,_ = solve_cvrp(data,self.first_solution_strategy, self.local_search_metaheuristic,
-                                                                self.time_limit_seconds,start = False,startRoutes = [])
+            self.solution,self.routes,self.value,_ = solve_cvrp(data,first_solution_strategy=self.first_solution_strategy,
+                                                                local_search_metaheuristic=self.local_search_metaheuristic,
+                                                                time_limit_seconds=self.time_limit_seconds,
+                                                                start = False,startRoutes = [])
             t2 = pfc()
             self.time_execution = t2 - t1
         else:
             t1 = pfc()
-            self.solution, self.routes, self.value, _ = solve_cvrp(data, self.first_solution_strategy,
-                                                                   self.local_search_metaheuristic,
-                                                                   self.time_limit_seconds, start=True, startRoutes=self.startRoutes)
+            self.solution, self.routes, self.value, _ = solve_cvrp(data, first_solution_strategy=self.first_solution_strategy,
+                                                                   local_search_metaheuristic=self.local_search_metaheuristic,
+                                                                  time_limit_seconds= self.time_limit_seconds,
+                                                                   start=True, startRoutes=self.startRoutes)
             t2 = pfc()
             self.time_execution = t2 - t1
             self.feasible,_,_=self.constraints()

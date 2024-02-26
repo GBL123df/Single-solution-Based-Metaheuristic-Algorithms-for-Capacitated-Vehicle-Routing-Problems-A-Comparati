@@ -41,22 +41,25 @@ class testAlgorithms:
         self.result = []
         r = 0
         sumVal = 0
+        self.kind = kind
+        self.par = par
         while r < reps:
             if kind == "orTools":
-                self.kind = kind
-                self.par = par
+
                 sol = self.instance.compute_ortSol(local_search_metaheuristic = par["local_search_metaheuristic"],
                                                          first_solution_strategy=par["first_solution_strategy"], time_limit_seconds=par["time_limit_seconds"],startRoutes =par["startRoutes"])
                 self.result.append(sol)
             elif kind == "solver":
-                self.kind = kind
-                self.par = par
+
                 sol = self.instance.compute_sol(T = par["T"],hmax= par["hmax"],temperature = par["temperature"],
                                                              len_taboo = par["len_taboo"],start = par["start"],mode = par["mode"],improvement= par["improvement"],cross_over= par["cross_over"])
                 self.result.append(sol)
             sumVal+= sol.value
             r+=1
-        self.averageValue = sumVal/reps
+        if reps > 0:
+            self.averageValue = sumVal/reps
+        else:
+            self.averageValue = None
 
     def export2dataFrame(self):
         instance = {"file": self.file,"NPoints":np.size(self.instance.maps,axis = 0),"capacity":self.instance.v_capacities}#instance":self.instance}
@@ -115,7 +118,7 @@ class TestBenchmarking(unittest.TestCase):
         current_file_path = os.path.abspath(__file__)
         project_root = os.path.abspath(os.path.join(current_file_path, '..'))
         self.path = project_root
-        self.file = os.path.join(self.path, file)
+        self.file = os.path.join(self.path, pathFile)
         self.savepath = os.path.join(self.path,savepath)
 
 
@@ -151,20 +154,26 @@ class TestBenchmarking(unittest.TestCase):
 
 
 
-    def testtestAlgorithms(self,save = False):
-        par = {"T" : 20,"hmax": 10, "temperature": 20, "len_taboo":10, "start":2, "mode":6,"improvement":('3bis', False),"cross_over" : False}
-        par1 = {"local_search_metaheuristic":routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,\
-                "first_solution_strategy":routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC,"time_limit_seconds":10,"startRoutes":[]}
+    def testtestAlgorithms(self,save = True):
+
+        par = {"T" : 20,"hmax": 10, "temperature": 20, "len_taboo":10, "start":2, "mode":6,
+               "improvement":('3bis', False),"cross_over" : False}
+
+        par1 = {"local_search_metaheuristic":routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING,
+                "first_solution_strategy":routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
+                "time_limit_seconds":1, "startRoutes":[]}
+
+
         test = testAlgorithms(self.file)
         kind = 'solver'
         kind1 = 'orTools'
 
-        test.executeTest(kind = kind,par = par,reps=1)
+        test.executeTest(kind = kind,par = par,reps=30)
         for t in test.result:
             print(t.value)
         test1 = testAlgorithms(self.file)
         test1.executeTest(kind = kind1,par = par1,reps = 5)
-        print(test1.result[0].value)
+        # print(test1.result[0].value)
 
         ins, solv, trials = test.export2dataFrame()
         ins1, solv1, trials1 = test1.export2dataFrame()

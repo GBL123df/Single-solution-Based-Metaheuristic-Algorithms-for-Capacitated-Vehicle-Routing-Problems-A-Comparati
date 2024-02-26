@@ -34,7 +34,7 @@ class Instance:
         feasible,_,_ = constraints(solution[0],self.demands,self.v_capacities)
         return Solution(routes=solution[0],value=solution[1],time_execution= t2 - t1,maps = self.maps, demands = self.demands, v_capacities = self.v_capacities,feasible=feasible)
 
-    def compute_ortSol(self,time_execution = np.inf,local_search_metaheuristic = None,
+    def compute_ortSol(self,local_search_metaheuristic = None,
                  first_solution_strategy = None, time_limit_seconds = None,startRoutes = []):
         solution = orts.orTSolution(maps = self.maps, demands=self.demands,v_capacities= self.v_capacities,
                                     local_search_metaheuristic=local_search_metaheuristic, first_solution_strategy=first_solution_strategy,
@@ -43,6 +43,8 @@ class Instance:
         solution.get_solution()
         t2 = pfc()
         feasible, _, _ = constraints(solution.routes, self.demands, self.v_capacities)
+        solution.feasible = feasible
+        solution.time_execution = t2-t1
         return  solution
 
     def plot_map(self):
