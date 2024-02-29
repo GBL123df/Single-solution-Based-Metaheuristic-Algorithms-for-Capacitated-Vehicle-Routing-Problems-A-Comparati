@@ -361,6 +361,11 @@ def ILNS2(points,demands, Q,T,hmax,len_taboo,improvement,cross_over):
     while t < T:
         labels = clust.generate_around_clusters(points, demands, Q)
         routes, sol = first_route(points, labels, max(labels)+1)
+        l = 0
+
+        if len(sols) == len_taboo and cross_over:
+            crossProb = np.exp(-pow((5 / 2 * l / hmax - 0.8325546111576977), 2))
+            routes, sol = pph.mixing(sols, points, demands, Q, crossProb)
         taboo = []
         taboo_violated = False
         taboo.append((routes,sol))
@@ -399,6 +404,11 @@ def divNS2(points,demands, Q,T,hmax,len_taboo,improvement,cross_over):
     while t < T:
         labels = clust.generate_around_clusters(points, demands, Q)
         routes, sol = first_route(points, labels, max(labels) + 1)
+        l = 0
+
+        if len(sols) == len_taboo and cross_over:
+            crossProb = np.exp(-pow((5 / 2 * l / hmax - 0.8325546111576977), 2))
+            routes, sol = pph.mixing(sols, points, demands, Q, crossProb)
         taboo = []
         taboo_violated = False
         taboo.append((routes,sol))

@@ -42,7 +42,7 @@ def shake(sol, routes, points, demands, Q, mode, destruction_prob, probs):
                 neigh_struct = np.random.choice(structs, p=probs)
                 # neigh_struct = np.random.choice(np.array([1,3]))
                 #             neigh_struct = 2
-                routes, difference = hrst.neighbour(neigh_struct, routes, points, demands, Q)
+                routes, difference = hrst.neighbour_improvement(neigh_struct, routes, points, demands, Q)
                 if difference < 0:
                     p = probs[neigh_struct]
                     restarter = p < 1 / (1 + eps)

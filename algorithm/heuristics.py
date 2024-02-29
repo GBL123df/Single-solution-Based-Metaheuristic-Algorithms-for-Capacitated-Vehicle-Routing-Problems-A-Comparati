@@ -1562,19 +1562,19 @@ def neighbour(case,routes, points, demands, Q): #mode può assumere i valori 'fe
         elif case == 13:
             new_routes, difference = swap_inter_route_improvement_more(routes, points, demands, Q)
 
-        elif case == 14:
-            new_routes, difference = swap_intra_route_improvement_more(routes, points, demands, Q)
+        # elif case == 14:
+        #     new_routes, difference = swap_intra_route_improvement_more(routes, points, demands, Q)
 
-        elif case == 15:
+        elif case == 14:
             new_routes, difference = two_opt_exchange_outer_improvement_more(routes, points, demands, Q)
 
-        elif case == 16:
+        elif case == 15:
             new_routes, difference = two_opt_exchange_inner_improvement_more(routes, points, demands, Q)
 
-        elif case == 17:
+        elif case == 16:
             new_routes, difference = routes_breaker(routes, points, demands, Q)
 
-        elif case == 18:
+        elif case == 17:
             new_routes, difference = merge_routes(routes, points, demands, Q)
 
 
@@ -1637,18 +1637,23 @@ def neighbour_improvement(case,routes, points, demands, Q): #mode può assumere 
         elif case == 12:
             new_routes, difference = swap_inter_route_improvement_more(routes, points, demands, Q)
 
-        elif case == 13:
-            new_routes, difference = swap_intra_route_improvement_more(routes, points, demands, Q)
-
-        elif case == 15:
+        elif case == 14:
             new_routes, difference = two_opt_exchange_outer_improvement_more(routes, points, demands, Q)
 
-        elif case == 14:
+        elif case == 13:
             new_routes, difference = two_opt_exchange_inner_improvement_more(routes, points, demands, Q)
 
         elif case == 10:
             new_routes, difference = merge_routes(routes, points, demands, Q)
 
+        elif case == 17:
+            new_routes, difference = routes_breaker(routes, points, demands, Q)
+
+        elif case == 15:
+            new_routes, difference = add_new_route_points(routes, points, demands, Q)
+
+        elif case == 16:
+            new_routes, difference = add_new_route_edge(routes, points, demands, Q)
         t2 = pfc()
 
         if debug == 'activated':

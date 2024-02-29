@@ -28,6 +28,48 @@ file5 = percorso + "Ghent1.txt"
 file6 = percorso + "P-n101-k4.txt"
 file7 = percorso + "Golden_20.txt"
 
+terne = []
+
+par = {"T": 20, "hmax": 10, "temperature": 20, "len_taboo": 10, "start": 2, "mode": 1,
+       "improvement": ('3bis', False), "cross_over": False}
+
+par1 = {"local_search_metaheuristic": routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING,
+        "first_solution_strategy": routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
+        "time_limit_seconds": 10, "startRoutes": []}
+kind = 'solver'
+kind1 = 'orTools'
+reps = 3
+reps1 = 1
+
+terne.append((par,kind,reps))
+terne.append((par1,kind1,reps1))
+
+def tAlgorithms(file, terne, save=True, savepath=None):
+    dfs = []
+
+    for par, kind, reps in terne:
+        test = testAlgorithms(file)
+        test.executeTest(kind=kind, par=par, reps=reps)
+        instance_df, solver_df, trials_df, stats_df = test.export2dataFrame()
+
+        dfs.append([instance_df, solver_df, trials_df, stats_df])
+
+    if save:
+        if savepath is None:
+            savepath = "default_output.xlsx"
+        pos = 0
+        with pd.ExcelWriter(savepath) as writer:
+            dfs[0][0].to_excel(writer, sheet_name='Sheet1', index=False, startrow=pos)
+            pos += len(dfs[0][0]) + 3
+            for df in dfs:
+                # Scrivi il secondo DataFrame nel foglio di lavoro Excel, posizionandolo sotto il primo
+                df[1].to_excel(writer, sheet_name='Sheet1', index=False, startrow=pos)
+                pos += len(df[1]) + 2
+                df[2].to_excel(writer, sheet_name='Sheet1', index=False, startrow=pos)
+                pos += len(df[2]) + 2
+                df[3].to_excel(writer, sheet_name='Sheet1', index=False, startrow=pos)
+                pos += len(df[3]) + 4
+
 
 class testAlgorithms:
 
@@ -67,17 +109,18 @@ class testAlgorithms:
         solver["kind"] = self.kind
 
         trials = []
-        maxV = -np.inf
-        bestV = np.inf
+        values = []
+        times = []
         for t in self.result:
             trials.append({"value":t.value,"feasible" : t.feasible,"time_execution":t.time_execution})#,"routes":t.routes})
-            if t.value < bestV:
-                bestV = t.value
-            if t.value > maxV:
-                maxV = t.value
-        stats = {"averageValue": self.averageValue, "WorstValue" : maxV, "BestValue":bestV}
-        trials.append(stats)
-        return pd.DataFrame([instance]), pd.DataFrame([solver]), pd.DataFrame(trials)
+            values.append(t.value)
+            times.append(t.time_execution)
+        values = np.array(values)
+        times = np.array(times)
+        stats = {"WorstValue" : max(values), "BestValue":min(values),"averageValue": np.mean(values),
+                 "medianValue":np.median(values),"WorstTime" : max(times),"bestTime": min(times),
+                 "averageTime":np.average(times),"medianTimes": np.median(times)}
+        return pd.DataFrame([instance]), pd.DataFrame([solver]), pd.DataFrame(trials),pd.DataFrame([stats])
 
 
 
@@ -85,71 +128,21 @@ class testAlgorithms:
     def plot_result(self):
         self.result.plot_routes(arrow=False)
 
-# class MassTest:
-#
-#     def __init__(self, file,kind,firsts,par,reps = 1):  # , num_vehicles):
-#         self.file = file#list
-#         self.par = par
-#         self.kind = kind
-#         self.firsts = firsts
-#         self.reps = reps
-#
-#         modes = [
-#             '1',
-#             '1bis',
-#             '2',
-#             '2bis',
-#             '3',
-#             '3bis'
-#         ]
-#         if kind == 'solver':
-#             self.tests = []
-#             for mode in enumerate(modes):
-#                 test = testAlgorithms(file)
-#                 test.executeTest(kind,par[0],par[1],par[2],par[3],par[4],par[5],par[6])
-#                 self.tests.append(test)
-#                 test = testAlgorithms(file)
-#                 test.executeTest(kind, par[0], par[1], par[2], par[3], par[4], par[5], par[6])
-#                 self.tests.append(test)
+
+
+
+
+
 
 
 class TestBenchmarking(unittest.TestCase):
-    def setUp(self,pathFile = file2, savepath = "./test/test2.xlsx" ):
+    def setUp(self,pathFile = file, savepath = "./test/test1.xlsx" ):
         current_file_path = os.path.abspath(__file__)
         project_root = os.path.abspath(os.path.join(current_file_path, '..'))
         self.path = project_root
         self.file = os.path.join(self.path, pathFile)
         self.savepath = os.path.join(self.path,savepath)
 
-
-    def testAllVS(self):
-        solution = []
-        instance = inst.create_instance_from_file(self.file)
-        t1 = pfc()
-        labels, _, C = clust.DBCVRI(instance.maps, instance.demands, instance.v_capacities)
-        startRoutes,sol_start = cvns.first_route(instance.maps,labels,C)
-
-        sol = ortS.solution_ORTools(instance,first_solution_strategy=routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
-                                           local_search_metaheuristic=routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC,
-                                           time_limit_seconds=10)
-        solution.append(sol)
-        modes = [
-            '1',
-            '1bis',
-            '2',
-            '2bis',
-            '3',
-            '3bis'
-        ]
-
-
-        for mode in modes:
-            sol = instance.compute_sol(T=10, hmax=2, temperature=20, len_taboo=10, start=2, mode=2,
-                                       improvement= (mode, False))
-            solution.append(sol)
-            sol = instance.compute_sol(T=10, hmax=2, temperature=20, len_taboo=10, start=2, mode=2,
-                                       improvement= (mode, True))
-            solution.append(sol)
 
 
 
@@ -161,13 +154,11 @@ class TestBenchmarking(unittest.TestCase):
 
         par1 = {"local_search_metaheuristic":routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING,
                 "first_solution_strategy":routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
-                "time_limit_seconds":1, "startRoutes":[]}
-
-
-        test = testAlgorithms(self.file)
+                "time_limit_seconds":10, "startRoutes":[]}
         kind = 'solver'
         kind1 = 'orTools'
 
+        test = testAlgorithms(self.file)
         test.executeTest(kind = kind,par = par,reps=30)
         for t in test.result:
             print(t.value)
@@ -197,8 +188,63 @@ class TestBenchmarking(unittest.TestCase):
                 trials1.to_excel(writer, sheet_name='Sheet1', index=False, startrow=pos)
 
 
+    def testtestAlgorithms(self,save = True):
+
+        par = {"T" : 20,"hmax": 10, "temperature": 20, "len_taboo":10, "start":2, "mode":1,
+               "improvement":('3bis', False),"cross_over" : False}
+
+        par1 = {"local_search_metaheuristic":routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING,
+                "first_solution_strategy":routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
+                "time_limit_seconds":10, "startRoutes":[]}
+        kind = 'solver'
+        kind1 = 'orTools'
+
+        test = testAlgorithms(self.file)
+        test.executeTest(kind = kind,par = par,reps=3)
+        for t in test.result:
+            print(t.value)
+        test1 = testAlgorithms(self.file)
+        test1.executeTest(kind = kind1,par = par1,reps = 1)
+        # print(test1.result[0].value)
+
+        ins, solv, trials,stats = test.export2dataFrame()
+        ins1, solv1, trials1,stats1 = test1.export2dataFrame()
+        if save:
+
+            nome_file_excel = self.savepath
+
+            # Crea un oggetto ExcelWriter
+            with pd.ExcelWriter(nome_file_excel) as writer:
+                # Scrivi il primo DataFrame nel foglio di lavoro Excel
+                ins.to_excel(writer, sheet_name='Sheet1', index=False)
+
+                pos = len(ins) + 3
+                # Scrivi il secondo DataFrame nel foglio di lavoro Excel, posizionandolo sotto il primo
+                solv.to_excel(writer, sheet_name='Sheet1', index=False, startrow= pos)
+                pos += len(solv)  + 2
+                trials.to_excel(writer, sheet_name='Sheet1', index=False, startrow=pos)
+                pos += len(trials)+1
+                stats.to_excel(writer, sheet_name='Sheet1', index=False, startrow=pos)
+                pos += len(stats) + 3
+                solv1.to_excel(writer, sheet_name='Sheet1', index=False, startrow=pos)
+                pos += len(solv1) + 2
+                trials1.to_excel(writer, sheet_name='Sheet1', index=False, startrow=pos)
+                pos += len(trials1) + 1
+                stats1.to_excel(writer, sheet_name='Sheet1', index=False, startrow=pos)
+
+
+
+    def test1(self,terne = terne, save=True):
+        tAlgorithms(self.file,terne,save, self.savepath)
 
 if __name__ == '__main__':
     unittest.main()
     test_suite = unittest.TestLoader().loadTestsFromTestCase(TestBenchmarking)
     test_result = unittest.TextTestRunner().run(test_suite)
+
+#analisi statistiche da fare:
+#confronto VNS vs ILS (su tempi e risultato, utilizzando wilcoxon rank test) QUESTO SICURO
+#confronto alcuni algoritmi diversi con solver OR-tools come controllo,
+#effettuando Friedman Test + scegliere una post-hoc procedure tra Bonferroni o holm
+#confrontare tipi di improvement su stesso algoritmo? first vs best e  singola fase vs. intensificazione  (wilcoxon)
+

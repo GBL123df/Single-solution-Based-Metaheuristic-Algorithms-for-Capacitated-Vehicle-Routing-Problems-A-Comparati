@@ -312,9 +312,7 @@ class TestBenchmarking(unittest.TestCase):
         t1 = pfc()
         labels, _, C = clust.DBCVRI(instance.maps, instance.demands, instance.v_capacities)
         startRoutes,sol_start = cvns.first_route(instance.maps,labels,C)
-        sol = instance.compute_ortSol(first_solution_strategy=routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
-                                           local_search_metaheuristic=routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING,
-                                           time_limit_seconds=10)
+
         sol = ortS.solution_ORTools(instance,first_solution_strategy=routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
                                            local_search_metaheuristic=routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING,
                                            time_limit_seconds=10)
@@ -323,7 +321,7 @@ class TestBenchmarking(unittest.TestCase):
 
 
         t3 = pfc()
-        solution = instance.compute_sol(T=5, hmax=20,temperature=100,len_taboo=5,start = 2,mode=6,improvement = ('3bis',False),cross_over = False)
+        solution = instance.compute_sol(T=10, hmax=20,temperature=100,len_taboo=2,start = 2,mode=4,improvement = ('4bis',True),cross_over = False)
         t4 = pfc()
         print("\nval= \n",solution.value,"\n")
         feasible = solution.constraints()
@@ -336,6 +334,50 @@ class TestBenchmarking(unittest.TestCase):
         self.assertGreaterEqual(0.1,abs(solution.value-distance_total),"case1")
         # self.assertEqual(distance_total,solution.value,"case1")
         self.assertGreaterEqual(0.1 * distance_total, abs(solution.value - sol.value),"case2")
+
+    def test_ortools4(self):
+        tol = 50
+
+        percorso = "./Instanze/"
+        file = percorso + "A-n32-k5.txt"
+        file2 = percorso + "X-n101-k25.txt"
+        file3 = percorso + "Flanders2.txt"
+        file4 = percorso + "Antwerp1.txt"
+        file5 = percorso + "Ghent1.txt"
+        file6 = percorso + "P-n101-k4.txt"
+        file7 = percorso + "Golden_20.txt"
+        file8 = percorso + "X-n856-k95.txt"
+
+        file = os.path.join(self.path, file)
+        file2 = os.path.join(self.path, file2)
+        file3 = os.path.join(self.path, file3)
+        file4 = os.path.join(self.path, file4)
+        file5 = os.path.join(self.path, file5)
+        file6 = os.path.join(self.path, file6)
+        file7 = os.path.join(self.path, file7)
+        file8 = os.path.join(self.path, file8)
+
+        instance = inst.create_instance_from_file(file6)
+
+        sols = []
+        times = []
+        for i in np.arange(1,7):
+            t3 = pfc()
+            solution = instance.compute_sol(T=5, hmax=10, temperature=100, len_taboo=2, start=2, mode=i,
+                                            improvement=('3bis', False), cross_over=False)
+            t4 = pfc()
+            sols.append(solution.value)
+            times.append(t4-t3)
+            print("\nval= \n", solution.value, "\n")
+        sols = np.array(sols)
+        times = np.array(times)
+        print("\n SolsOrder =  ",np.argsort(sols),"\n TimeOrder = ", np.argsort(times))
+            # feasible = solution.constraints()
+            # solution.plot_routes()
+
+
+        distance_total = inst.total_euclidean_distance(solution.routes, solution.maps)
+
 
 
 if __name__ == '__main__':
