@@ -18,6 +18,10 @@ from ortools.constraint_solver import routing_enums_pb2#trovare le altre dipende
 from ortools.linear_solver import pywraplp
 from algorithm import orToolsSolver as ortS
 import pandas as pd
+import hashlib
+import scipy.stats as spst
+from statsmodels.stats.multitest import multipletests
+
 
 percorso = "./Instanze/"
 file = percorso + "A-n32-k5.txt"
@@ -44,6 +48,12 @@ reps1 = 1
 terne.append((par,kind,reps))
 terne.append((par1,kind1,reps1))
 
+def generate_unique_filename(directory, prefix="output", extension="xlsx"):
+    timestamp = str(time.time())  # Timestamp attuale come stringa
+    unique_id = hashlib.md5(timestamp.encode()).hexdigest()[:8]  # Hash MD5 del timestamp
+    filename = f"{prefix}_{unique_id}.{extension}"  # Costruzione del nome file
+    return os.path.join(directory, filename)
+
 def tAlgorithms(file, terne, save=True, savepath=None):
     dfs = []
 
@@ -55,8 +65,8 @@ def tAlgorithms(file, terne, save=True, savepath=None):
         dfs.append([instance_df, solver_df, trials_df, stats_df])
 
     if save:
-        if savepath is None:
-            savepath = "default_output.xlsx"
+        if savepath is None or (os.path.exists(savepath) and not savepath.endswith(".xlsx")):
+            savepath = generate_unique_filename(savepath,prefix='test')
         pos = 0
         with pd.ExcelWriter(savepath) as writer:
             dfs[0][0].to_excel(writer, sheet_name='Sheet1', index=False, startrow=pos)
@@ -69,6 +79,66 @@ def tAlgorithms(file, terne, save=True, savepath=None):
                 pos += len(df[2]) + 2
                 df[3].to_excel(writer, sheet_name='Sheet1', index=False, startrow=pos)
                 pos += len(df[3]) + 4
+
+def test_directory(directory,terne, save=True, savepath=None):
+    for filename in os.listdir(directory):
+        if filename.endswith(".txt"):  # Assicurati che stai lavorando solo con file di testo
+            file_path = os.path.join(directory, filename)
+            tAlgorithms(file_path,terne, save, savepath)
+
+
+
+def dataCollect(directory):
+    current_file_path = os.path.abspath(__file__)
+    project_root = os.path.abspath(os.path.join(current_file_path, '..'))
+    directory = os.path.join(project_root, directory)
+
+    tabelle_desiderate = []
+    for filename in os.listdir(directory):
+        if filename.endswith(".xlsx"):
+            file_path = os.path.join(directory, filename)
+            df = pd.read_excel(file_path, header=None)
+            righe_vuote = df.index[df.isnull().all(axis=1)].tolist()
+
+            tabella_test = []
+            start = 0
+            for end in righe_vuote:
+                tabella = df.iloc[start:end, :]
+                if len(tabella) > 0:
+                    tabella = tabella.dropna(axis=1)
+                    tabella.columns = tabella.iloc[0]  # Imposta i nomi delle colonne su 'tabella'
+                    tabella = tabella.iloc[1:, :]  # Rimuovi la prima riga (intestazione delle colonne)
+                    tabella_test.append(tabella)
+                start = end + 1
+            tabelle_desiderate.append(tabella_test)
+
+    values_list = []
+    times_list = []
+
+    for tabella_test in tabelle_desiderate:
+        indexes = []
+        index = 2
+        while index < len(tabella_test):
+            indexes.append(index)
+            index += 3
+            val = []
+            tim = []
+        for index in indexes:
+            val.append(tabella_test[index]["value"])
+            tim.append(tabella_test[index]["time_execution"])
+        values_list.append(val)
+        times_list.append(tim)
+    values_ncc = values_list[0]
+    for val in values_list:
+        for i, v in enumerate(val):
+            values_ncc[i] = pd.concat([values_ncc[i], v], ignore_index=True)
+    times_ncc = times_list[0]
+    for tim in times_list:
+        for i, v in enumerate(tim):
+            times_ncc[i] = pd.concat([times_ncc[i], v], ignore_index=True)
+
+    return values_ncc,times_ncc
+
 
 
 class testAlgorithms:
@@ -123,15 +193,8 @@ class testAlgorithms:
         return pd.DataFrame([instance]), pd.DataFrame([solver]), pd.DataFrame(trials),pd.DataFrame([stats])
 
 
-
-
     def plot_result(self):
         self.result.plot_routes(arrow=False)
-
-
-
-
-
 
 
 
@@ -142,9 +205,6 @@ class TestBenchmarking(unittest.TestCase):
         self.path = project_root
         self.file = os.path.join(self.path, pathFile)
         self.savepath = os.path.join(self.path,savepath)
-
-
-
 
 
     def testtestAlgorithms(self,save = True):
@@ -236,6 +296,81 @@ class TestBenchmarking(unittest.TestCase):
 
     def test1(self,terne = terne, save=True):
         tAlgorithms(self.file,terne,save, self.savepath)
+
+    def test2(self):
+
+        current_file_path = os.path.abspath(__file__)
+        istanze = "./Instanze/Instanze_E"
+        istanze = os.path.abspath(os.path.join(current_file_path, '..', istanze))
+        salvataggio = "./test/"
+        salvataggio = os.path.abspath(os.path.join(current_file_path, '..', salvataggio))
+
+        terne = []
+
+        par1 = {"T": 10, "hmax": 10, "temperature": 20, "len_taboo": 10, "start": 2, "mode": 1,
+               "improvement": ('3bis', False), "cross_over": False}
+
+        par2 = {"T": 5, "hmax": 10, "temperature": 20, "len_taboo": 10, "start": 2, "mode": 6,
+               "improvement": ('3bis', False), "cross_over": False}
+
+        par0 = {"local_search_metaheuristic": routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC,
+                "first_solution_strategy": routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
+                "time_limit_seconds": 10, "startRoutes": []}
+
+        par3 = {"T": 10, "hmax": 10, "temperature": 20, "len_taboo": 10, "start": 2, "mode": 2,
+                "improvement": ('3bis', False), "cross_over": False}
+
+        kind3 = 'solver'
+        kind2 = 'solver'
+        kind1 = 'solver'
+        kind0 = 'orTools'
+        reps0 = 10
+        reps1 = 10
+        reps2 = 10
+        reps3 = 10
+
+        terne.append((par0, kind0, reps0))
+        terne.append((par1, kind1, reps1))
+        terne.append((par2, kind2, reps2))
+        terne.append((par3, kind3, reps3))
+
+
+
+        test_directory(directory=istanze,terne=terne,save=True,savepath= salvataggio)
+
+    def testStatistico1(self, directory='./test'):
+        values_ncc,times_ncc = dataCollect(directory)
+
+        val3 = []
+        tim3 = []
+        for v in values_ncc[2]:
+            for i in range(3):
+                val3.append(v)
+
+        for t in times_ncc[2]:
+            for i in range(3):
+                tim3.append(t)
+        values_ncc[2]= pd.Series(val3)
+        times_ncc[2] = pd.Series(tim3)
+        # values = np.divide(np.array(values_ncc), np.array(values_ncc[2]))
+        # times = np.divide(np.array(times_ncc), np.array(times_ncc[2]))
+        values = np.array(values_ncc)
+        times = np.array(times_ncc)
+        # times = times.T
+        # values = values.T
+        testValueWilcox2S = spst.wilcoxon(values[0],values[1],zero_method = 'zsplit',alternative = 'two-sided')
+        testTimesWilcox2S = spst.wilcoxon(times[0],times[1],zero_method = 'zsplit',alternative = 'two-sided')
+        testValueWilcoxL = spst.wilcoxon(values[0], values[1], zero_method='zsplit',alternative = 'less')
+        testTimesWilcoxL = spst.wilcoxon(times[0], times[1], zero_method='zsplit',alternative = 'less')
+        testValueWilcoxG = spst.wilcoxon(values[0], values[1], zero_method='zsplit',alternative = 'greater')
+        testTimesWilcoxG = spst.wilcoxon(times[0], times[1], zero_method='zsplit',alternative = 'greater')
+
+        FriedmanValue = spst.friedmanchisquare(values[2],values[0],values[1])
+        FriedmanTimes = spst.friedmanchisquare(times[2],times[0],times[1])
+        valueFriedCorrected = multipletests(FriedmanValue[1],method='holm')
+        timesFriedCorrected = multipletests(FriedmanTimes[1],method='holm')
+
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -298,6 +298,8 @@ class TestBenchmarking(unittest.TestCase):
         file6 = percorso + "P-n101-k4.txt"
         file7 = percorso + "Golden_20.txt"
         file8 = percorso + "X-n856-k95.txt"
+        file9 = percorso + "E-n101-k14.txt"
+        file10 = percorso + "CMT13.txt"
 
         file = os.path.join(self.path, file)
         file2 = os.path.join(self.path, file2)
@@ -307,8 +309,11 @@ class TestBenchmarking(unittest.TestCase):
         file6 = os.path.join(self.path, file6)
         file7 = os.path.join(self.path, file7)
         file8 = os.path.join(self.path, file8)
+        file9 = os.path.join(self.path, file9)
+        file10 = os.path.join(self.path, file10)
 
-        instance = inst.create_instance_from_file(file)
+        instance = inst.create_instance_from_file(file10)
+
         t1 = pfc()
         labels, _, C = clust.DBCVRI(instance.maps, instance.demands, instance.v_capacities)
         startRoutes,sol_start = cvns.first_route(instance.maps,labels,C)
@@ -321,7 +326,7 @@ class TestBenchmarking(unittest.TestCase):
 
 
         t3 = pfc()
-        solution = instance.compute_sol(T=10, hmax=20,temperature=100,len_taboo=2,start = 2,mode=4,improvement = ('4bis',True),cross_over = False)
+        solution = instance.compute_sol(T=5, hmax=10,temperature=100,len_taboo=2,start = 5,mode=2,improvement = ('3bis',False),cross_over = True)
         t4 = pfc()
         print("\nval= \n",solution.value,"\n")
         feasible = solution.constraints()
