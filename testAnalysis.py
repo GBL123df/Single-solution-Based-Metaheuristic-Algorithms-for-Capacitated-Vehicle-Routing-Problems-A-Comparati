@@ -80,12 +80,15 @@ def tAlgorithms(file, terne, save=True, savepath=None):
                 df[3].to_excel(writer, sheet_name='Sheet1', index=False, startrow=pos)
                 pos += len(df[3]) + 4
 
-def test_directory(directory,terne, save=True, savepath=None):
-    for filename in os.listdir(directory):
-        if filename.endswith(".txt"):  # Assicurati che stai lavorando solo con file di testo
-            file_path = os.path.join(directory, filename)
-            tAlgorithms(file_path,terne, save, savepath)
-
+def test_directory(directory,terne, save=True, savepath=None,istanza = None):
+    if istanza is None:
+        for filename in os.listdir(directory):
+            if filename.endswith(".txt"):  # Assicurati che stai lavorando solo con file di testo
+                file_path = os.path.join(directory, filename)
+                tAlgorithms(file_path,terne, save, savepath)
+    else:
+        file_path = directory+istanza
+        tAlgorithms(file_path, terne, save, savepath)
 
 
 def dataCollect(directory):
@@ -139,8 +142,26 @@ def dataCollect(directory):
 
     return values_ncc,times_ncc
 
+def FriedmanRanks(values,mode='avg'):
+    ranks = np.argsort(values,axis=1) + 1
+    if mode == 'avg':
+        return np.average(ranks,axis=0)
+    elif mode == 'sum':
+        return np.sum(ranks, axis=0)
+def FriedmanStatsPair(ranks,number_exp):
+    k = np.size(ranks)
+    M = np.repeat(np.array([ranks]),k,axis=0)
+    Z = (M - M.T)*np.sqrt(k*(k+1)/(6*number_exp))
+    p_value = np.zeros([k,k])
+    for i in range(k):
+        for j in range(k):
+            p_value[i,j] = 1 - spst.norm.cdf(Z[i,j])
+    return p_value,Z
 
-
+def calculate_Ff(n, k, R):
+    summation = sum(pow(R,2))
+    Ff = (12 * n) / (k * (k + 1)) * (summation - (k * pow((k + 1),2)) / 4)
+    return Ff
 class testAlgorithms:
 
     def __init__(self, file):  # , num_vehicles):
@@ -297,21 +318,15 @@ class TestBenchmarking(unittest.TestCase):
     def test1(self,terne = terne, save=True):
         tAlgorithms(self.file,terne,save, self.savepath)
 
-    def test2(self):
-
-        current_file_path = os.path.abspath(__file__)
-        istanze = "./Instanze/Instanze_E"
-        istanze = os.path.abspath(os.path.join(current_file_path, '..', istanze))
-        salvataggio = "./test/"
-        salvataggio = os.path.abspath(os.path.join(current_file_path, '..', salvataggio))
+    def test2(self,istanze = "./Instanze/Instanze_CMT",istanza= None):
 
         terne = []
 
         par1 = {"T": 10, "hmax": 10, "temperature": 20, "len_taboo": 10, "start": 2, "mode": 1,
-               "improvement": ('3bis', False), "cross_over": False}
+                "improvement": ('3bis', False), "cross_over": False}
 
         par2 = {"T": 5, "hmax": 10, "temperature": 20, "len_taboo": 10, "start": 2, "mode": 6,
-               "improvement": ('3bis', False), "cross_over": False}
+                "improvement": ('3bis', False), "cross_over": False}
 
         par0 = {"local_search_metaheuristic": routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC,
                 "first_solution_strategy": routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
@@ -333,43 +348,183 @@ class TestBenchmarking(unittest.TestCase):
         terne.append((par1, kind1, reps1))
         terne.append((par2, kind2, reps2))
         terne.append((par3, kind3, reps3))
+        if istanza is None:
+            current_file_path = os.path.abspath(__file__)
+            istanze = os.path.abspath(os.path.join(current_file_path, '..', istanze))
+            salvataggio = "./test/"
+            salvataggio = os.path.abspath(os.path.join(current_file_path, '..', salvataggio))
+
+            test_directory(directory=istanze,terne=terne,save=True,savepath= salvataggio)
+
+        else:
+            current_file_path = os.path.abspath(__file__)
+            istanze = os.path.abspath(os.path.join(current_file_path, '..', istanze))
+            salvataggio = "./test/"
+            salvataggio = os.path.abspath(os.path.join(current_file_path, '..', salvataggio))
+            test_directory(directory=istanze,terne=terne,save=True,savepath= salvataggio,istanza=istanza)
 
 
+    def testStatistico1(self, directories=['./testAlgos/testA','./testAlgos/testB','./testAlgos/testE','./testAlgos/testP','./testAlgos/testCMT']):
+        values_ncc = None
+        times_ncc = None
+        for dir in directories:
+            values_ncc_dir,times_ncc_dir = dataCollect(dir)
+            if values_ncc is None:
+                values_ncc = values_ncc_dir
+            else:
+                for i,v in enumerate(values_ncc_dir):
 
-        test_directory(directory=istanze,terne=terne,save=True,savepath= salvataggio)
+                    values_ncc[i] = pd.concat([values_ncc[i],v])
+            if times_ncc is None:
+                times_ncc = times_ncc_dir
+            else:
+                for i, t in enumerate(times_ncc_dir):
+                    times_ncc[i] = pd.concat([times_ncc[i], t])
 
-    def testStatistico1(self, directory='./test'):
-        values_ncc,times_ncc = dataCollect(directory)
-
-        val3 = []
-        tim3 = []
-        for v in values_ncc[2]:
-            for i in range(3):
-                val3.append(v)
-
-        for t in times_ncc[2]:
-            for i in range(3):
-                tim3.append(t)
-        values_ncc[2]= pd.Series(val3)
-        times_ncc[2] = pd.Series(tim3)
+        # val3 = []
+        # tim3 = []
+        # for v in values_ncc[2]:
+        #     for i in range(3):
+        #         val3.append(v)
+        #
+        # for t in times_ncc[2]:
+        #     for i in range(3):
+        #         tim3.append(t)
+        # values_ncc[2]= pd.Series(val3)
+        # times_ncc[2] = pd.Series(tim3)
         # values = np.divide(np.array(values_ncc), np.array(values_ncc[2]))
         # times = np.divide(np.array(times_ncc), np.array(times_ncc[2]))
         values = np.array(values_ncc)
+        values = values.T
+        n = np.size(values, axis=0)
+        for i in range(n):
+            values[i] = (values[i] - min(values[i]))/(max(values[i]) - min(values[i]))
+
         times = np.array(times_ncc)
-        # times = times.T
-        # values = values.T
-        testValueWilcox2S = spst.wilcoxon(values[0],values[1],zero_method = 'zsplit',alternative = 'two-sided')
-        testTimesWilcox2S = spst.wilcoxon(times[0],times[1],zero_method = 'zsplit',alternative = 'two-sided')
-        testValueWilcoxL = spst.wilcoxon(values[0], values[1], zero_method='zsplit',alternative = 'less')
-        testTimesWilcoxL = spst.wilcoxon(times[0], times[1], zero_method='zsplit',alternative = 'less')
-        testValueWilcoxG = spst.wilcoxon(values[0], values[1], zero_method='zsplit',alternative = 'greater')
-        testTimesWilcoxG = spst.wilcoxon(times[0], times[1], zero_method='zsplit',alternative = 'greater')
+        times = times.T
+        for i in range(n):
+            times[i] = (times[i] - min(times[i])) / (max(times[i]) - min(times[i]))
 
-        FriedmanValue = spst.friedmanchisquare(values[2],values[0],values[1])
-        FriedmanTimes = spst.friedmanchisquare(times[2],times[0],times[1])
-        valueFriedCorrected = multipletests(FriedmanValue[1],method='holm')
-        timesFriedCorrected = multipletests(FriedmanTimes[1],method='holm')
+            # times = times.T
+            # values = values.T
+        # testValueWilcox2S = spst.wilcoxon(values[0],values[1],zero_method = 'zsplit',alternative = 'two-sided')
+        # testTimesWilcox2S = spst.wilcoxon(times[0],times[1],zero_method = 'zsplit',alternative = 'two-sided')
+        # testValueWilcoxL = spst.wilcoxon(values[0], values[1], zero_method='zsplit',alternative = 'less')
+        # testTimesWilcoxL = spst.wilcoxon(times[0], times[1], zero_method='zsplit',alternative = 'less')
+        # testValueWilcoxG = spst.wilcoxon(values[0], values[1], zero_method='zsplit',alternative = 'greater')
+        # testTimesWilcoxG = spst.wilcoxon(times[0], times[1], zero_method='zsplit',alternative = 'greater')
+        FWER = 0.1
+        ranks = FriedmanRanks(values, mode='avg')
+        k = len(ranks)
+        Xi = spst.chi2(df=4)
+        Ff_values = calculate_Ff(n, k, ranks)
+        Fried_values = 1 - Xi.cdf(Ff_values)
+        if Fried_values < FWER:
+            p_values_values,_ = FriedmanStatsPair(ranks,n)
+            valueFriedCorrected1 = []
+            valueFriedCorrected2 = []
+            alphas = [0.1,0.05,0.01]
+            for alpha in alphas:
+                p_values_con1 = np.concatenate([p_values_values[1:,0],p_values_values[2:,1],p_values_values[3:,2]])
+                res1,_,_,_ = multipletests(p_values_con1.flatten(), alpha=alpha,method='holm')
+                p_values_con2 = np.concatenate([p_values_values[0, 1:], p_values_values[1,2:],p_values_values[2,3:]])
+                res2, _, _, _ = multipletests(p_values_con2.flatten(), alpha=alpha, method='holm')
+                valueFriedCorrected1.append(res1)
+                valueFriedCorrected2.append(res2)
+            valueFriedCorrected1 = np.array(valueFriedCorrected1)
+            valueFriedCorrected2 = np.array(valueFriedCorrected2)
 
+            combinations = np.concatenate([np.array([np.zeros(3), np.arange(1, 4)]),
+                                           np.array([np.ones(2), np.arange(2, 4)]),
+                                           np.array([2 * np.ones(1), np.arange(3, 4)])],axis=1).T
+            combinations = np.array(combinations,dtype=int)
+            testValueWilcox2S = []
+            testValueWilcoxL = []
+            testValueWilcoxG = []
+            for c in combinations:
+                pTS= spst.wilcoxon(values[:,c[0]], values[:,c[1]], zero_method='zsplit', alternative='two-sided')
+                pL= spst.wilcoxon(values[:,c[0]], values[:,c[1]], zero_method='zsplit',alternative = 'less')
+                pG= spst.wilcoxon(values[:,c[0]], values[:,c[1]], zero_method='zsplit',alternative = 'greater')
+                testValueWilcox2S.append(pTS[1])
+                testValueWilcoxL.append(pL[1])
+                testValueWilcoxG.append(pG[1])
+            testValueWilcox2S = np.array(testValueWilcox2S)
+            testValueWilcoxL = np.array(testValueWilcoxL)
+            testValueWilcoxG = np.array(testValueWilcoxG)
+
+            valueFriedWilcoxCorrected2S = []
+            valueFriedWilcoxCorrectedL = []
+            valueFriedWilcoxCorrectedG = []
+            for alpha in alphas:
+                res2S,_,_,_ = multipletests(testValueWilcox2S, alpha=alpha,method='holm')
+                resL,_,_,_ = multipletests(testValueWilcoxL, alpha=alpha,method='holm')
+                resG,_,_,_ = multipletests(testValueWilcoxG, alpha=alpha,method='holm')
+
+                valueFriedWilcoxCorrected2S.append(res2S)
+                valueFriedWilcoxCorrectedL.append(resL)
+                valueFriedWilcoxCorrectedG.append(resG)
+            valueFriedWilcoxCorrected2S = np.array(valueFriedWilcoxCorrected2S)
+            valueFriedWilcoxCorrectedL = np.array(valueFriedWilcoxCorrectedL)
+            valueFriedWilcoxCorrectedG = np.array(valueFriedWilcoxCorrectedG)
+
+        # FriedmanTimes = spst.friedmanchisquare(times[0],times[1],times[2],times[3])
+        # if FriedmanTimes[1]<=FWER:
+        FWER = 0.1
+        ranks = FriedmanRanks(times,mode='avg')
+        k = len(ranks)
+        Xi = spst.chi2(df=4)
+        Ff_times = calculate_Ff(n,k,ranks)
+        Fried_times = 1 - Xi.cdf(Ff_times)
+        if Fried_times < FWER:
+            p_values_times,_ = FriedmanStatsPair(ranks,n)
+            timesFriedCorrected1 = []
+            timesFriedCorrected2 = []
+            alphas = [0.1,0.05,0.01]
+            for alpha in alphas:
+                p_values_con1 = np.concatenate([p_values_values[1:,0],p_values_values[2:,1],p_values_values[3:,2]])
+                res1, _, _, _ = multipletests(p_values_con1.flatten(), alpha=alpha, method='holm')
+                p_values_con2 = np.concatenate([p_values_values[0, 1:], p_values_values[1,2:],p_values_values[2,3:]])
+                res2, _, _, _ = multipletests(p_values_con2.flatten(), alpha=alpha, method='holm')
+                timesFriedCorrected1.append(res1)
+                timesFriedCorrected2.append(res2)
+            timesFriedCorrected1 = np.array(timesFriedCorrected1)
+            timesFriedCorrected2 = np.array(timesFriedCorrected2)
+
+            combinations = np.concatenate([np.array([np.zeros(3), np.arange(1, 4)]),
+                                           np.array([np.ones(2), np.arange(2, 4)]),
+                                           np.array([2 * np.ones(1), np.arange(3, 4)])], axis=1).T
+            testTimeWilcox2S = []
+            testTimeWilcoxL = []
+            testTimeWilcoxG = []
+            for c in combinations:
+                pTS = spst.wilcoxon(times[:,c[0]], times[:,c[1]], zero_method='zsplit', alternative='two-sided')
+                pL = spst.wilcoxon(times[:,c[0]], times[:,c[1]], zero_method='zsplit', alternative='less')
+                pG = spst.wilcoxon(times[:,c[0]], times[:,c[1]], zero_method='zsplit', alternative='greater')
+
+                testTimeWilcox2S.append( pTS[1]
+                    )
+                testTimeWilcoxL.append( pL[1]
+                    )
+                testTimeWilcoxG.append( pG[1]
+                    )
+            testTimeWilcox2S = np.array(testTimeWilcox2S)
+            testTimeWilcoxL = np.array(testTimeWilcoxL)
+            testTimeWilcoxG = np.array(testTimeWilcoxG)
+
+            timeFriedWilcoxCorrected2S = []
+            timeFriedWilcoxCorrectedL = []
+            timeFriedWilcoxCorrectedG = []
+            for alpha in alphas:
+                res2S, _, _, _ = multipletests(testTimeWilcox2S, alpha=alpha, method='holm')
+                resL, _, _, _ = multipletests(testTimeWilcoxL, alpha=alpha, method='holm')
+                resG, _, _, _ = multipletests(testTimeWilcoxG, alpha=alpha, method='holm')
+
+                timeFriedWilcoxCorrected2S.append(res2S)
+                timeFriedWilcoxCorrectedL.append(resL)
+                timeFriedWilcoxCorrectedG.append(resG)
+            timeFriedWilcoxCorrected2S = np.array(timeFriedWilcoxCorrected2S)
+            timeFriedWilcoxCorrectedL = np.array(timeFriedWilcoxCorrectedL)
+            timeFriedWilcoxCorrectedG = np.array(timeFriedWilcoxCorrectedG)
 
 
 if __name__ == '__main__':
