@@ -90,6 +90,61 @@ def test_directory(directory,terne, save=True, savepath=None,istanza = None):
         file_path = directory+istanza
         tAlgorithms(file_path, terne, save, savepath)
 
+def InstancesAndAVGs(directory,algos = ["orTools","VNS1","VNS2","IVNS"]):
+    current_file_path = os.path.abspath(__file__)
+    project_root = os.path.abspath(os.path.join(current_file_path, '..'))
+    directory = os.path.join(project_root, directory)
+
+    values_df = []
+    times_df = []
+    name_df = []
+    for filename in os.listdir(directory):
+        if filename.endswith(".xlsx"):
+            file_path = os.path.join(directory, filename)
+            df = pd.read_excel(file_path, header=None)
+            righe_vuote = df.index[df.isnull().all(axis=1)].tolist()
+
+            tabella_test = []
+            start = 0
+            for i,end in enumerate(righe_vuote):
+                tabella = df.iloc[start:end, :]
+                if len(tabella) > 0:
+                    tabella = tabella.dropna(axis=1)
+                    tabella.columns = tabella.iloc[0]  # Imposta i nomi delle colonne su 'tabella'
+                    tabella = tabella.iloc[1:, :]  # Rimuovi la prima riga (intestazione delle colonne)
+                    tabella_test.append(tabella)
+                start = end + 1
+            end += 3
+            tabella = df.iloc[start:end, :]
+            if len(tabella) > 0:
+                tabella = tabella.dropna(axis=1)
+                tabella.columns = tabella.iloc[0]  # Imposta i nomi delle colonne su 'tabella'
+                tabella = tabella.iloc[1:, :]  # Rimuovi la prima riga (intestazione delle colonne)
+                tabella_test.append(tabella)
+
+            values = []
+            times = []
+            for i,tabella_test_single in enumerate(tabella_test):
+
+                if i == 0:
+                    name_df.append( os.path.splitext(os.path.basename(tabella_test_single['file'].values[0]))[0])
+                elif i%3 == 0 and i > 0:
+
+                    values.append(tabella_test_single["averageValue"].values[0])
+                    times.append(tabella_test_single["averageTime"].values[0])
+            values_df.append(values)
+            times_df.append(times)
+
+    values_df = pd.DataFrame(values_df,columns=algos)
+    values_df["InstanceName"] = name_df
+    # values_df.columns = values_df.iloc[0]  # Imposta i nomi delle colonne su 'values_df'
+    # values_df = values_df.iloc[1:, :]
+    times_df = pd.DataFrame(times_df,columns=algos)
+    times_df["InstanceName"] = name_df
+    # times_df.columns = times_df.iloc[0]  # Imposta i nomi delle colonne su 'times_df'
+    # # times_df = times_df.iloc[1:, :]
+    return values_df, times_df
+
 
 def dataCollect(directory):
     current_file_path = os.path.abspath(__file__)
@@ -120,7 +175,6 @@ def dataCollect(directory):
 
     for tabella_test in tabelle_desiderate:
         indexes = []
-        index = 2
         while index < len(tabella_test):
             indexes.append(index)
             index += 3
@@ -525,6 +579,25 @@ class TestBenchmarking(unittest.TestCase):
             timeFriedWilcoxCorrected2S = np.array(timeFriedWilcoxCorrected2S)
             timeFriedWilcoxCorrectedL = np.array(timeFriedWilcoxCorrectedL)
             timeFriedWilcoxCorrectedG = np.array(timeFriedWilcoxCorrectedG)
+
+    def testStatistico1PlotInstances(self, directories=['./testAlgos/testA','./testAlgos/testB','./testAlgos/testE','./testAlgos/testP','./testAlgos/testCMT']):
+        values_ncc = None
+        times_ncc = None
+
+        for dir in directories:
+            values_ncc_dir,times_ncc_dir = InstancesAndAVGs(dir)
+            if values_ncc is None:
+                values_ncc = values_ncc_dir
+            else:
+
+                values_ncc = pd.concat([values_ncc,values_ncc_dir])
+            if times_ncc is None:
+                times_ncc = times_ncc_dir
+            else:
+
+                times_ncc = pd.concat([times_ncc, times_ncc_dir])
+        values_ncc.to_excel("C:/Users/giuse/OneDrive/Desktop/TESI MAGISTRALE/ProveBenchmarking/ClusterVNS/testAlgos/valuesPrint.xlsx")
+        times_ncc.to_excel("C:/Users/giuse/OneDrive/Desktop/TESI MAGISTRALE/ProveBenchmarking/ClusterVNS/testAlgos/timesPrint.xlsx")
 
 
 if __name__ == '__main__':
