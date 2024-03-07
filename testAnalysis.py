@@ -175,6 +175,7 @@ def dataCollect(directory):
 
     for tabella_test in tabelle_desiderate:
         indexes = []
+        index = 2
         while index < len(tabella_test):
             indexes.append(index)
             index += 3
@@ -197,7 +198,7 @@ def dataCollect(directory):
     return values_ncc,times_ncc
 
 def FriedmanRanks(values,mode='avg'):
-    ranks = np.argsort(values,axis=1) + 1
+    ranks = spst.rankdata(values,axis=1)
     if mode == 'avg':
         return np.average(ranks,axis=0)
     elif mode == 'sum':
@@ -205,11 +206,11 @@ def FriedmanRanks(values,mode='avg'):
 def FriedmanStatsPair(ranks,number_exp):
     k = np.size(ranks)
     M = np.repeat(np.array([ranks]),k,axis=0)
-    Z = (M - M.T)*np.sqrt(k*(k+1)/(6*number_exp))
+    Z = (M - M.T)/np.sqrt(k*(k+1)/(6*number_exp))
     p_value = np.zeros([k,k])
     for i in range(k):
         for j in range(k):
-            p_value[i,j] = 1 - spst.norm.cdf(Z[i,j])
+            p_value[i,j] = spst.norm.cdf(Z[i,j])
     return p_value,Z
 
 def calculate_Ff(n, k, R):
@@ -372,40 +373,43 @@ class TestBenchmarking(unittest.TestCase):
     def test1(self,terne = terne, save=True):
         tAlgorithms(self.file,terne,save, self.savepath)
 
-    def test2(self,istanze = "./Instanze/Instanze_CMT",istanza= None):
+    def test2(self,istanze = "./Instanze/Instanze_CMT",istanza= None,salvataggio = "./testImprovs/testCMT"):
 
         terne = []
 
-        par1 = {"T": 10, "hmax": 10, "temperature": 20, "len_taboo": 10, "start": 2, "mode": 1,
+        par1 = {"T": 10, "hmax": 10, "temperature": 20, "len_taboo": 10, "start": 2, "mode": 2,
                 "improvement": ('3bis', False), "cross_over": False}
 
-        par2 = {"T": 5, "hmax": 10, "temperature": 20, "len_taboo": 10, "start": 2, "mode": 6,
-                "improvement": ('3bis', False), "cross_over": False}
+        par2 = {"T": 10, "hmax": 10, "temperature": 20, "len_taboo": 10, "start": 2, "mode": 2,
+                "improvement": ('1_1bis', False), "cross_over": False}
 
-        par0 = {"local_search_metaheuristic": routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC,
-                "first_solution_strategy": routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
-                "time_limit_seconds": 10, "startRoutes": []}
-
-        par3 = {"T": 10, "hmax": 10, "temperature": 20, "len_taboo": 10, "start": 2, "mode": 2,
-                "improvement": ('3bis', False), "cross_over": False}
-
-        kind3 = 'solver'
+        # par2 = {"T": 5, "hmax": 10, "temperature": 20, "len_taboo": 10, "start": 2, "mode": 6,
+        #         "improvement": ('3bis', False), "cross_over": False}
+        #
+        # par0 = {"local_search_metaheuristic": routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC,
+        #         "first_solution_strategy": routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC,
+        #         "time_limit_seconds": 10, "startRoutes": []}
+        #
+        # par3 = {"T": 10, "hmax": 10, "temperature": 20, "len_taboo": 10, "start": 2, "mode": 2,
+        #         "improvement": ('3bis', False), "cross_over": False}
+        #
+        # kind3 = 'solver'
         kind2 = 'solver'
         kind1 = 'solver'
-        kind0 = 'orTools'
-        reps0 = 10
+        # kind0 = 'orTools'
+        # reps0 = 10
         reps1 = 10
         reps2 = 10
-        reps3 = 10
+        # reps3 = 10
 
-        terne.append((par0, kind0, reps0))
+        # terne.append((par0, kind0, reps0))
         terne.append((par1, kind1, reps1))
         terne.append((par2, kind2, reps2))
-        terne.append((par3, kind3, reps3))
+        # terne.append((par3, kind3, reps3))
         if istanza is None:
             current_file_path = os.path.abspath(__file__)
             istanze = os.path.abspath(os.path.join(current_file_path, '..', istanze))
-            salvataggio = "./test/"
+
             salvataggio = os.path.abspath(os.path.join(current_file_path, '..', salvataggio))
 
             test_directory(directory=istanze,terne=terne,save=True,savepath= salvataggio)
@@ -435,19 +439,7 @@ class TestBenchmarking(unittest.TestCase):
                 for i, t in enumerate(times_ncc_dir):
                     times_ncc[i] = pd.concat([times_ncc[i], t])
 
-        # val3 = []
-        # tim3 = []
-        # for v in values_ncc[2]:
-        #     for i in range(3):
-        #         val3.append(v)
-        #
-        # for t in times_ncc[2]:
-        #     for i in range(3):
-        #         tim3.append(t)
-        # values_ncc[2]= pd.Series(val3)
-        # times_ncc[2] = pd.Series(tim3)
-        # values = np.divide(np.array(values_ncc), np.array(values_ncc[2]))
-        # times = np.divide(np.array(times_ncc), np.array(times_ncc[2]))
+
         values = np.array(values_ncc)
         values = values.T
         n = np.size(values, axis=0)
@@ -468,7 +460,7 @@ class TestBenchmarking(unittest.TestCase):
         # testValueWilcoxG = spst.wilcoxon(values[0], values[1], zero_method='zsplit',alternative = 'greater')
         # testTimesWilcoxG = spst.wilcoxon(times[0], times[1], zero_method='zsplit',alternative = 'greater')
         FWER = 0.1
-        ranks = FriedmanRanks(values, mode='avg')
+        ranks = FriedmanRanks(values)
         k = len(ranks)
         Xi = spst.chi2(df=4)
         Ff_values = calculate_Ff(n, k, ranks)
@@ -486,7 +478,15 @@ class TestBenchmarking(unittest.TestCase):
                 valueFriedCorrected1.append(res1)
                 valueFriedCorrected2.append(res2)
             valueFriedCorrected1 = np.array(valueFriedCorrected1)
+            testname1 = ["oR-tools < VNS1","oR-tools < VNS2","oR-tools < IVNS","VNS1 < VNS2","VNS1 < IVNS"," VNS2 < IVNS"]
+            valueFriedCorrected1 = pd.DataFrame(valueFriedCorrected1.T,columns=["alpha = 0.1","alpha = 0.05","alpha = 0.01"])
+            valueFriedCorrected1["Test"] = testname1
+            testname2 = ["oR-tools > VNS1","oR-tools > VNS2","oR-tools > IVNS","VNS1 > VNS2","VNS1 > IVNS"," VNS2 > IVNS"]
             valueFriedCorrected2 = np.array(valueFriedCorrected2)
+            valueFriedCorrected2 = pd.DataFrame(valueFriedCorrected2.T,columns=["alpha = 0.1", "alpha = 0.05", "alpha = 0.01"])
+            valueFriedCorrected2["Test"] = testname2
+            valueFriedCorrected = pd.concat([valueFriedCorrected1,valueFriedCorrected2])
+            valueFriedCorrected.to_excel("C:/Users/giuse/OneDrive/Desktop/TESI MAGISTRALE/ProveBenchmarking/ClusterVNS/testAlgos/valueZcorrected.xlsx")
 
             combinations = np.concatenate([np.array([np.zeros(3), np.arange(1, 4)]),
                                            np.array([np.ones(2), np.arange(2, 4)]),
@@ -518,13 +518,24 @@ class TestBenchmarking(unittest.TestCase):
                 valueFriedWilcoxCorrectedL.append(resL)
                 valueFriedWilcoxCorrectedG.append(resG)
             valueFriedWilcoxCorrected2S = np.array(valueFriedWilcoxCorrected2S)
+            testnameL = ["oR-tools < VNS1","oR-tools < VNS2","oR-tools < IVNS","VNS1 < VNS2","VNS1 < IVNS"," VNS2 < IVNS"]
             valueFriedWilcoxCorrectedL = np.array(valueFriedWilcoxCorrectedL)
+            testnameG = ["oR-tools > VNS1","oR-tools > VNS2","oR-tools > IVNS","VNS1 > VNS2","VNS1 > IVNS"," VNS2 > IVNS"]
             valueFriedWilcoxCorrectedG = np.array(valueFriedWilcoxCorrectedG)
 
+            valueFriedWilcoxCorrectedL = pd.DataFrame(valueFriedWilcoxCorrectedL.T,
+                                                columns=["alpha = 0.1", "alpha = 0.05", "alpha = 0.01"])
+            valueFriedWilcoxCorrectedL["Test"] = testnameL
+
+            valueFriedWilcoxCorrectedG = pd.DataFrame(valueFriedWilcoxCorrectedG.T,
+                                                columns=["alpha = 0.1", "alpha = 0.05", "alpha = 0.01"])
+            valueFriedWilcoxCorrectedG["Test"] = testnameG
+            valueFriedWilcoxCorrected = pd.concat([valueFriedWilcoxCorrectedL, valueFriedWilcoxCorrectedG])
+            valueFriedWilcoxCorrected.to_excel("C:/Users/giuse/OneDrive/Desktop/TESI MAGISTRALE/ProveBenchmarking/ClusterVNS/testAlgos/valueFriedWilcoxCorrected.xlsx")
         # FriedmanTimes = spst.friedmanchisquare(times[0],times[1],times[2],times[3])
         # if FriedmanTimes[1]<=FWER:
         FWER = 0.1
-        ranks = FriedmanRanks(times,mode='avg')
+        ranks = FriedmanRanks(times)
         k = len(ranks)
         Xi = spst.chi2(df=4)
         Ff_times = calculate_Ff(n,k,ranks)
@@ -535,18 +546,31 @@ class TestBenchmarking(unittest.TestCase):
             timesFriedCorrected2 = []
             alphas = [0.1,0.05,0.01]
             for alpha in alphas:
-                p_values_con1 = np.concatenate([p_values_values[1:,0],p_values_values[2:,1],p_values_values[3:,2]])
+                p_values_con1 = np.concatenate([p_values_times[1:,0],p_values_times[2:,1],p_values_times[3:,2]])
                 res1, _, _, _ = multipletests(p_values_con1.flatten(), alpha=alpha, method='holm')
-                p_values_con2 = np.concatenate([p_values_values[0, 1:], p_values_values[1,2:],p_values_values[2,3:]])
+                p_values_con2 = np.concatenate([p_values_times[0, 1:], p_values_times[1,2:],p_values_times[2,3:]])
                 res2, _, _, _ = multipletests(p_values_con2.flatten(), alpha=alpha, method='holm')
                 timesFriedCorrected1.append(res1)
                 timesFriedCorrected2.append(res2)
             timesFriedCorrected1 = np.array(timesFriedCorrected1)
+            testname1 = ["oR-tools < VNS1", "oR-tools < VNS2", "oR-tools < IVNS", "VNS1 < VNS2", "VNS1 < IVNS",
+                         " VNS2 < IVNS"]
+            timesFriedCorrected1 = pd.DataFrame(timesFriedCorrected1.T,
+                                                columns=["alpha = 0.1", "alpha = 0.05", "alpha = 0.01"])
+            timesFriedCorrected1["Test"] = testname1
+            testname2 = ["oR-tools > VNS1", "oR-tools > VNS2", "oR-tools > IVNS", "VNS1 > VNS2", "VNS1 > IVNS",
+                         " VNS2 > IVNS"]
             timesFriedCorrected2 = np.array(timesFriedCorrected2)
+            timesFriedCorrected2 = pd.DataFrame(timesFriedCorrected2.T,
+                                                columns=["alpha = 0.1", "alpha = 0.05", "alpha = 0.01"])
+            timesFriedCorrected2["Test"] = testname2
+            timesFriedCorrected = pd.concat([timesFriedCorrected1, timesFriedCorrected2])
+            timesFriedCorrected.to_excel("C:/Users/giuse/OneDrive/Desktop/TESI MAGISTRALE/ProveBenchmarking/ClusterVNS/testAlgos/timesZcorrected.xlsx")
 
             combinations = np.concatenate([np.array([np.zeros(3), np.arange(1, 4)]),
                                            np.array([np.ones(2), np.arange(2, 4)]),
                                            np.array([2 * np.ones(1), np.arange(3, 4)])], axis=1).T
+            combinations = np.array(combinations, dtype=int)
             testTimeWilcox2S = []
             testTimeWilcoxL = []
             testTimeWilcoxG = []
@@ -579,6 +603,21 @@ class TestBenchmarking(unittest.TestCase):
             timeFriedWilcoxCorrected2S = np.array(timeFriedWilcoxCorrected2S)
             timeFriedWilcoxCorrectedL = np.array(timeFriedWilcoxCorrectedL)
             timeFriedWilcoxCorrectedG = np.array(timeFriedWilcoxCorrectedG)
+            testnameL = ["oR-tools < VNS1", "oR-tools < VNS2", "oR-tools < IVNS", "VNS1 < VNS2", "VNS1 < IVNS",
+                         " VNS2 < IVNS"]
+            testnameG = ["oR-tools > VNS1", "oR-tools > VNS2", "oR-tools > IVNS", "VNS1 > VNS2", "VNS1 > IVNS",
+                         " VNS2 > IVNS"]
+
+            timeFriedWilcoxCorrectedL = pd.DataFrame(timeFriedWilcoxCorrectedL.T,
+                                                      columns=["alpha = 0.1", "alpha = 0.05", "alpha = 0.01"])
+            timeFriedWilcoxCorrectedL["Test"] = testnameL
+
+            timeFriedWilcoxCorrectedG = pd.DataFrame(timeFriedWilcoxCorrectedG.T,
+                                                      columns=["alpha = 0.1", "alpha = 0.05", "alpha = 0.01"])
+            timeFriedWilcoxCorrectedG["Test"] = testnameG
+            timeFriedWilcoxCorrected = pd.concat([timeFriedWilcoxCorrectedL, timeFriedWilcoxCorrectedG])
+            timeFriedWilcoxCorrected.to_excel("C:/Users/giuse/OneDrive/Desktop/TESI MAGISTRALE/ProveBenchmarking/ClusterVNS/testAlgos/timesFriedWilcoxCorrected.xlsx")
+
 
     def testStatistico1PlotInstances(self, directories=['./testAlgos/testA','./testAlgos/testB','./testAlgos/testE','./testAlgos/testP','./testAlgos/testCMT']):
         values_ncc = None
@@ -599,7 +638,49 @@ class TestBenchmarking(unittest.TestCase):
         values_ncc.to_excel("C:/Users/giuse/OneDrive/Desktop/TESI MAGISTRALE/ProveBenchmarking/ClusterVNS/testAlgos/valuesPrint.xlsx")
         times_ncc.to_excel("C:/Users/giuse/OneDrive/Desktop/TESI MAGISTRALE/ProveBenchmarking/ClusterVNS/testAlgos/timesPrint.xlsx")
 
+    def testStatistico2(self, directories=['./testImprovs/testA','./testImprovs/testB','./testImprovs/testE','./testImprovs/testP','./testImprovs/testCMT']):
+        values_ncc = None
+        times_ncc = None
+        for dir in directories:
+            values_ncc_dir,times_ncc_dir = dataCollect(dir)
+            if values_ncc is None:
+                values_ncc = values_ncc_dir
+            else:
+                for i,v in enumerate(values_ncc_dir):
 
+                    values_ncc[i] = pd.concat([values_ncc[i],v])
+            if times_ncc is None:
+                times_ncc = times_ncc_dir
+            else:
+                for i, t in enumerate(times_ncc_dir):
+                    times_ncc[i] = pd.concat([times_ncc[i], t])
+
+
+        values = np.array(values_ncc)
+        values = values.T
+        n = np.size(values, axis=0)
+        for i in range(n):
+            if min(values[i]) == max(values[i]):
+                values[i] = 1/len(values[i]) * np.ones(len(values[i]))
+            else:
+                values[i] = (values[i] - min(values[i]))/(max(values[i]) - min(values[i]))
+
+        times = np.array(times_ncc)
+        times = times.T
+        for i in range(n):
+            if min(times[i]) == max(times[i]):
+                times[i] = 1/len(times[i]) * np.ones(len(times[i]))
+            else:
+                times[i] = (times[i] - min(times[i]))/(max(times[i]) - min(times[i]))
+            # times = times.T
+            # values = values.T
+        testValueWilcox2S = spst.wilcoxon(values[:,0],values[:,1],zero_method = 'zsplit',alternative = 'two-sided')
+        testTimesWilcox2S = spst.wilcoxon(times[:,0],times[:,1],zero_method = 'zsplit',alternative = 'two-sided')
+        testValueWilcoxL = spst.wilcoxon(values[:,0],values[:,1], zero_method='zsplit',alternative = 'less')
+        testTimesWilcoxL = spst.wilcoxon(times[:,0],times[:,1], zero_method='zsplit',alternative = 'less')
+        testValueWilcoxG = spst.wilcoxon(values[:,0],values[:,1], zero_method='zsplit',alternative = 'greater')
+        testTimesWilcoxG = spst.wilcoxon(times[:,0],times[:,1], zero_method='zsplit',alternative = 'greater')
+        pfc()
 if __name__ == '__main__':
     unittest.main()
     test_suite = unittest.TestLoader().loadTestsFromTestCase(TestBenchmarking)
