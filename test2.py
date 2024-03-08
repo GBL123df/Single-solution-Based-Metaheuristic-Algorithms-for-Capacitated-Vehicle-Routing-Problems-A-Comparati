@@ -312,7 +312,7 @@ class TestBenchmarking(unittest.TestCase):
         file9 = os.path.join(self.path, file9)
         file10 = os.path.join(self.path, file10)
 
-        instance = inst.create_instance_from_file(file10)
+        instance = inst.create_instance_from_file(file)
 
         t1 = pfc()
         labels, _, C = clust.DBCVRI(instance.maps, instance.demands, instance.v_capacities)
@@ -326,7 +326,7 @@ class TestBenchmarking(unittest.TestCase):
 
 
         t3 = pfc()
-        solution = instance.compute_sol(T=5, hmax=10,temperature=100,len_taboo=2,start = 5,mode=2,improvement = ('3bis',False),cross_over = True)
+        solution = instance.compute_sol(T=10, hmax=20,temperature=100,len_taboo=2,start = 2,mode=4,improvement = ('3bis',False),cross_over = False)
         t4 = pfc()
         print("\nval= \n",solution.value,"\n")
         feasible = solution.constraints()

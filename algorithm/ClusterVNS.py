@@ -12,7 +12,6 @@ from algorithm import  shakes as shk
 
 N = 3
 
-#dall'algoritmo dbscan ottengo i cluster da cui tirerò fuori le prime routes, che creo con questa function
 def first_route(points,labels, C):
     routes = []
     depot = points[0]
@@ -83,12 +82,10 @@ def first_random_route(points, labels, C):
     return routes, sol
 
 
-#permette do verificare se tutte le constraint della soluzione corrente sono rispettate
-#routes è la soluzione in termini di strade
 
 
 
-#fase dell'algoritmo di "esplorazione" casuale del vicinato
+
 
 
 
@@ -274,11 +271,6 @@ def divNS(routes,sol,points,demands, Q,T,hmax,len_taboo,improvement,cross_over):
         mode = 'cocktail'
         crossProb = np.exp(-pow((5 / 2 * t / T - 0.8325546111576977), 2))
 
-        # if shak:
-        #     x1, sol1, probs = shake2(sol, routes, points, demands, Q, mode, perturb=0, probs=probs)
-        # else:
-        #     x1 = routes
-        #     sol1 = sol
 
         ##diversification phase
         x2, sol2 = imp.improvement_choseNeigh(sol, routes, points, demands, Q, hmax, first=improvement[1],kind = 'd')
@@ -299,7 +291,6 @@ def divNS(routes,sol,points,demands, Q,T,hmax,len_taboo,improvement,cross_over):
                     break
             if taboo_violated and t < T - 1:
                 perturb = np.random.choice([0,1])
-                # routes, sol, probs = shk.shake3(sol2, x2, points, demands, Q, mode, perturb=perturb, probs=probs,kind='d')
                 labels = clust.generate_clusters(points, demands, Q)
                 routes, sol = first_route(points, labels, max(labels))
                 continue
@@ -319,12 +310,6 @@ def divNS(routes,sol,points,demands, Q,T,hmax,len_taboo,improvement,cross_over):
         mode = 'cocktail'
         crossProb = np.exp(-pow((5 / 2 * l / hmax - 0.8325546111576977), 2))
         l += 1
-
-        # if shak:
-        #     x1, sol1, probs = shake2(sol, routes, points, demands, Q, mode, perturb=0, probs=probs)
-        # else:
-        #     x1 = routes
-        #     sol1 = sol
 
         ##intensification phase
         x2, sol2 = imp.improvement_choseNeigh(sol, routes, points, demands, Q, hmax, first=improvement[1], kind='i')
@@ -430,7 +415,6 @@ def divNS2(points,demands, Q,T,hmax,len_taboo,improvement,cross_over):
                 taboo.append((routes, sol))
                 if len(taboo) == len_taboo and cross_over:
                     routes, sol = pph.mixing(taboo, points, demands, Q, crossProb)
-                    # taboo = []
             elif sol2 - sol >= 0 and feasible == True:
                 taboo_violated = False
                 for old in taboo:

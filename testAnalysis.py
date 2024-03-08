@@ -68,7 +68,7 @@ def tAlgorithms(file, terne, save=True, savepath=None):
         if savepath is None or (os.path.exists(savepath) and not savepath.endswith(".xlsx")):
             savepath = generate_unique_filename(savepath,prefix='test')
         pos = 0
-        with pd.ExcelWriter(savepath) as writer:
+        with pd.ExcelWriter(savepath,engine='xlsxwriter') as writer:
             dfs[0][0].to_excel(writer, sheet_name='Sheet1', index=False, startrow=pos)
             pos += len(dfs[0][0]) + 3
             for df in dfs:
@@ -219,7 +219,7 @@ def calculate_Ff(n, k, R):
     return Ff
 class testAlgorithms:
 
-    def __init__(self, file):  # , num_vehicles):
+    def __init__(self, file):
         current_file_path = os.path.abspath(__file__)
         project_root = os.path.abspath(os.path.join(current_file_path, '..'))
         self.file = os.path.join(project_root, file)
@@ -373,15 +373,15 @@ class TestBenchmarking(unittest.TestCase):
     def test1(self,terne = terne, save=True):
         tAlgorithms(self.file,terne,save, self.savepath)
 
-    def test2(self,istanze = "./Instanze/Instanze_CMT",istanza= None,salvataggio = "./testImprovs/testCMT"):
+    def test2(self,istanze = "./Instanze/Instanze_P",istanza= None,salvataggio = "./testCrosses/testP"):
 
         terne = []
 
-        par1 = {"T": 10, "hmax": 10, "temperature": 20, "len_taboo": 10, "start": 2, "mode": 2,
+        par1 = {"T": 10, "hmax": 10, "temperature": 20, "len_taboo": 2, "start": 2, "mode": 2,
                 "improvement": ('3bis', False), "cross_over": False}
 
-        par2 = {"T": 10, "hmax": 10, "temperature": 20, "len_taboo": 10, "start": 2, "mode": 2,
-                "improvement": ('1_1bis', False), "cross_over": False}
+        par2 = {"T": 10, "hmax": 10, "temperature": 20, "len_taboo": 2, "start": 2, "mode": 2,
+                "improvement": ('3bis', False), "cross_over": True}
 
         # par2 = {"T": 5, "hmax": 10, "temperature": 20, "len_taboo": 10, "start": 2, "mode": 6,
         #         "improvement": ('3bis', False), "cross_over": False}
@@ -638,7 +638,7 @@ class TestBenchmarking(unittest.TestCase):
         values_ncc.to_excel("C:/Users/giuse/OneDrive/Desktop/TESI MAGISTRALE/ProveBenchmarking/ClusterVNS/testAlgos/valuesPrint.xlsx")
         times_ncc.to_excel("C:/Users/giuse/OneDrive/Desktop/TESI MAGISTRALE/ProveBenchmarking/ClusterVNS/testAlgos/timesPrint.xlsx")
 
-    def testStatistico2(self, directories=['./testImprovs/testA','./testImprovs/testB','./testImprovs/testE','./testImprovs/testP','./testImprovs/testCMT']):
+    def testStatistico2(self, directories=['./testCrosses/testA','./testCrosses/testB','./testCrosses/testE','./testCrosses/testP','./testCrosses/testCMT']):
         values_ncc = None
         times_ncc = None
         for dir in directories:
@@ -686,9 +686,5 @@ if __name__ == '__main__':
     test_suite = unittest.TestLoader().loadTestsFromTestCase(TestBenchmarking)
     test_result = unittest.TextTestRunner().run(test_suite)
 
-#analisi statistiche da fare:
-#confronto VNS vs ILS (su tempi e risultato, utilizzando wilcoxon rank test) QUESTO SICURO
-#confronto alcuni algoritmi diversi con solver OR-tools come controllo,
-#effettuando Friedman Test + scegliere una post-hoc procedure tra Bonferroni o holm
-#confrontare tipi di improvement su stesso algoritmo? first vs best e  singola fase vs. intensificazione  (wilcoxon)
+
 
