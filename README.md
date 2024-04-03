@@ -11,7 +11,7 @@ Given the computational complexity inherent in VRPs, traditional exact solving a
 #### Contents
 - **Code**: Implementation of metaheuristic modules that allows to build some metaheuristic algorithms for solving CVRP and some examples of built algorithms and codes of some tests written in python.
 - **Thesis**: The master thesis work that contains more details about what there is in the codes deployed.
-- **Files**: Input and output files achieved from the runs of some tests.
+- **Files**: Input and output files achieved from the runs of some tests: Instances are input benchmark files for the tests, the tests directories contains various tests results. 
   
 #### Usage
 Users can clone this repository and explore the codebase, thesis, and test cases.
